@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/message.dart';
 import '../services/ai_service.dart';
 import '../models/health_data.dart';
 
 class ChatProvider extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AIService _aiService = AIService();
   
   final List<Conversation> _conversations = [
@@ -162,28 +160,6 @@ class ChatProvider extends ChangeNotifier {
     } finally {
       _isAITyping = false;
       notifyListeners();
-    }
-  }
-
-  /// Load messages from Firestore (for persistence)
-  Future<void> loadMessagesFromFirestore(String conversationId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('conversations')
-          .doc(conversationId)
-          .collection('messages')
-          .orderBy('timestamp')
-          .get();
-
-      final messages = snapshot.docs.map((doc) {
-        final data = doc.data();
-        return ChatMessage.fromJson(data);
-      }).toList();
-
-      _messages[conversationId] = messages;
-      notifyListeners();
-    } catch (e) {
-      print('Error loading messages: $e');
     }
   }
 }

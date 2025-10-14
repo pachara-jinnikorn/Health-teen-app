@@ -1,4 +1,3 @@
-
 class HealthData {
   int steps;
   double sleep;
@@ -27,6 +26,21 @@ class HealthData {
         DailyData(day: 'Sun', steps: 6234, sleep: 7.5, calories: 1850),
       ],
     );
+  }
+
+  // Helper getter for weekly steps data
+  List<int> get weeklySteps {
+    return history.map((day) => day.steps).toList();
+  }
+
+  // Helper getter for weekly sleep data
+  List<double> get weeklySleep {
+    return history.map((day) => day.sleep).toList();
+  }
+
+  // Helper getter for weekly calories data
+  List<int> get weeklyCalories {
+    return history.map((day) => day.calories).toList();
   }
 
   Map<String, dynamic> toJson() {

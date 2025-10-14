@@ -29,6 +29,190 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.sm),
+              
+              // Greeting
+              Consumer<HealthDataProvider>(
+                builder: (context, provider, _) {
+                  final hour = DateTime.now().hour;
+                  String greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+                  
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$greeting, Ethan! 👋',
+                        style: AppTextStyles.heading2,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'You\'re doing great today!',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  );
+                },
+              ),
+              
+              const SizedBox(height: AppSpacing.lg),
+              
+              // Daily Goal Progress Card
+              Consumer<HealthDataProvider>(
+                builder: (context, provider, _) {
+                  final stepsProgress = (provider.healthData.steps / 10000).clamp(0.0, 1.0);
+                  final sleepProgress = (provider.healthData.sleep / 8).clamp(0.0, 1.0);
+                  final caloriesProgress = (provider.healthData.calories / 2000).clamp(0.0, 1.0);
+                  final overallProgress = (stepsProgress + sleepProgress + caloriesProgress) / 3;
+                  
+                  return Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.secondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Daily Progress',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${(overallProgress * 100).toInt()}% Complete',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Streak Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Text('🔥', style: TextStyle(fontSize: 16)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${provider.currentStreak} Days',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        
+                        // Progress Circles
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildCircularProgress(
+                              'Steps',
+                              stepsProgress,
+                              '${provider.healthData.steps}',
+                              '10k',
+                              Colors.white,
+                            ),
+                            _buildCircularProgress(
+                              'Sleep',
+                              sleepProgress,
+                              '${provider.healthData.sleep}h',
+                              '8h',
+                              Colors.white,
+                            ),
+                            _buildCircularProgress(
+                              'Calories',
+                              caloriesProgress,
+                              '${provider.healthData.calories}',
+                              '2k',
+                              Colors.white,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: AppSpacing.lg),
+              
+              // Quick Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Quick Actions", style: AppTextStyles.heading2),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickAction(
+                      context,
+                      icon: Icons.directions_walk,
+                      label: 'Log Steps',
+                      color: const Color(0xFF6366F1),
+                      onTap: () => _showLogDialog(context, 'steps'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _buildQuickAction(
+                      context,
+                      icon: Icons.bedtime,
+                      label: 'Log Sleep',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => _showLogDialog(context, 'sleep'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _buildQuickAction(
+                      context,
+                      icon: Icons.restaurant,
+                      label: 'Log Meal',
+                      color: const Color(0xFFEC4899),
+                      onTap: () => _showLogDialog(context, 'calories'),
+                    ),
+                  ),
+                ],
+              ),
+              
               const SizedBox(height: AppSpacing.lg),
               
               // Today's Health Section
@@ -44,7 +228,10 @@ class HomeScreen extends StatelessWidget {
                         label: 'Steps',
                         value: provider.healthData.steps.toString(),
                         unit: 'Daily steps',
-                        onView: () => _showLogDialog(context, 'steps'),
+                        onView: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                        ),
                         onAdd: () => _showLogDialog(context, 'steps'),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -53,7 +240,10 @@ class HomeScreen extends StatelessWidget {
                         label: 'Sleep',
                         value: '${provider.healthData.sleep}h',
                         unit: 'Sleep duration',
-                        onView: () => _showLogDialog(context, 'sleep'),
+                        onView: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                        ),
                         onAdd: () => _showLogDialog(context, 'sleep'),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -62,7 +252,10 @@ class HomeScreen extends StatelessWidget {
                         label: 'Calories',
                         value: provider.healthData.calories.toString(),
                         unit: 'Calories burned',
-                        onView: () => _showLogDialog(context, 'calories'),
+                        onView: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                        ),
                         onAdd: () => _showLogDialog(context, 'calories'),
                       ),
                     ],
@@ -95,6 +288,97 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularProgress(
+    String label,
+    double progress,
+    String value,
+    String goal,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 70,
+              height: 70,
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 6,
+                backgroundColor: Colors.white.withOpacity(0.3),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  '/$goal',
+                  style: TextStyle(
+                    color: color.withOpacity(0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -133,6 +417,15 @@ class HomeScreen extends StatelessWidget {
                   provider.updateCalories(int.parse(value));
                 }
                 Navigator.pop(context);
+                
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$type logged successfully! 🎉'),
+                    backgroundColor: AppColors.success,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               }
             },
             child: const Text('Save'),

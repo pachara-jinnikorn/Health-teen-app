@@ -13,11 +13,12 @@ dependencies:
   # State Management
   provider: ^6.1.1
   
-  firebase_core: ^3.8.1
-  firebase_auth: ^5.3.4
-  cloud_firestore: ^5.5.2
-  firebase_storage: ^12.3.8
-  firebase_messaging: ^15.1.8
+  # Firebase - Commented out for now
+  # firebase_core: ^3.8.1
+  # firebase_auth: ^5.3.4
+  # cloud_firestore: ^5.5.2
+  # firebase_storage: ^12.3.8
+  # firebase_messaging: ^15.1.8
   
   # Local Storage
   shared_preferences: ^2.2.2

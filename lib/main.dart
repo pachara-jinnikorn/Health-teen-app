@@ -9,9 +9,6 @@ import 'utils/constants.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase (you'll need to run: flutterfire configure)
-  // await Firebase.initializeApp();
-  
   runApp(const HealthTeenApp());
 }
 
