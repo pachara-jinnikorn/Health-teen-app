@@ -13,113 +13,475 @@ class ProfileScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Consumer<HealthDataProvider>(
+            builder: (context, provider, _) {
+              return Column(
                 children: [
-                  const Text('Profile', style: AppTextStyles.heading1),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined),
-                    onPressed: () {},
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Profile', style: AppTextStyles.heading1),
+                      IconButton(
+                        icon: const Icon(Icons.share_outlined),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile shared! 📤'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: AppSpacing.lg),
-              
-              // Profile Picture
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Center(
-                  child: Text('👤', style: TextStyle(fontSize: 48)),
-                ),
-              ),
-              
-              const SizedBox(height: AppSpacing.md),
-              
-              const Text('Ethan Carter', style: AppTextStyles.heading2),
-              const Text('Free Member', style: AppTextStyles.bodySmall),
-              
-              const SizedBox(height: AppSpacing.lg),
-              
-              // Dashboard Stats
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Dashboard', style: AppTextStyles.heading3),
-                    const SizedBox(height: AppSpacing.md),
-                    Consumer<HealthDataProvider>(
-                      builder: (context, provider, _) {
-                        return Row(
+                  
+                  const SizedBox(height: AppSpacing.lg),
+                  
+                  // Profile Card with Gradient
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.secondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Profile Picture
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: const Center(
+                            child: Text('👤', style: TextStyle(fontSize: 40)),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: AppSpacing.md),
+                        
+                        const Text(
+                          'Ethan Carter',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 4),
+                        
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Free Member',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: AppSpacing.lg),
+                        
+                        // Stats Row
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatItem('Sleep', '${provider.healthData.sleep}h'),
-                            _buildStatItem('Calories', '${provider.healthData.calories}'),
-                            _buildStatItem('Steps', '${provider.healthData.steps}'),
+                            _buildStatItem(
+                              '${provider.currentStreak}',
+                              'Day Streak',
+                              Colors.white,
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            _buildStatItem(
+                              '42',
+                              'Posts',
+                              Colors.white,
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            _buildStatItem(
+                              '${provider.badges.length}',
+                              'Badges',
+                              Colors.white,
+                            ),
                           ],
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: AppSpacing.lg),
-              
-              // Settings Options
-              _buildSettingItem(Icons.lock_outline, 'Password'),
-              _buildSettingItem(Icons.privacy_tip_outlined, 'Privacy'),
-              _buildSettingItem(Icons.notifications_outlined, 'Notifications'),
-              _buildSettingItem(Icons.emoji_events_outlined, 'Challenge'),
-              _buildSettingItem(Icons.people_outline, 'Community'),
-            ],
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.lg),
+                  
+                  // Health Overview Section
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Health Overview',
+                          style: AppTextStyles.heading3,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        
+                        _buildHealthProgress(
+                          'Steps',
+                          provider.healthData.steps,
+                          10000,
+                          Icons.directions_walk,
+                          const Color(0xFF6366F1),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        
+                        _buildHealthProgress(
+                          'Sleep',
+                          (provider.healthData.sleep * 100).toInt(),
+                          800,
+                          Icons.bedtime,
+                          const Color(0xFF8B5CF6),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        
+                        _buildHealthProgress(
+                          'Calories',
+                          provider.healthData.calories,
+                          2000,
+                          Icons.local_fire_department,
+                          const Color(0xFFEC4899),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.lg),
+                  
+                  // Achievement Badges
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Achievement Badges',
+                          style: AppTextStyles.heading3,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: AppSpacing.md,
+                            mainAxisSpacing: AppSpacing.md,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemCount: provider.badges.length,
+                          itemBuilder: (context, index) {
+                            final badge = provider.badges[index];
+                            return Container(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: badge.color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: badge.color.withOpacity(0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    badge.icon,
+                                    style: const TextStyle(fontSize: 32),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    badge.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    badge.description,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.lg),
+                  
+                  // Settings Section
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Settings',
+                      style: AppTextStyles.heading2,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  _buildSettingItem(
+                    Icons.person_outline,
+                    'Edit Profile',
+                    () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Edit Profile tapped')),
+                      );
+                    },
+                  ),
+                  _buildSettingItem(
+                    Icons.lock_outline,
+                    'Password & Security',
+                    () {},
+                  ),
+                  _buildSettingItem(
+                    Icons.notifications_outlined,
+                    'Notifications',
+                    () {},
+                  ),
+                  _buildSettingItem(
+                    Icons.privacy_tip_outlined,
+                    'Privacy Settings',
+                    () {},
+                  ),
+                  _buildSettingItem(
+                    Icons.help_outline,
+                    'Help & Support',
+                    () {},
+                  ),
+                  _buildSettingItem(
+                    Icons.info_outline,
+                    'About',
+                    () {},
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => _showLogoutDialog(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: BorderSide(color: AppColors.error),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  // App Version
+                  Text(
+                    'Version 1.0.0',
+                    style: AppTextStyles.caption,
+                  ),
+                  
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String value, String label, Color color) {
     return Column(
       children: [
-        Text(label, style: AppTextStyles.bodySmall),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: AppTextStyles.heading2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: color.withOpacity(0.8),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildSettingItem(IconData icon, String label) {
+  Widget _buildHealthProgress(
+    String label,
+    int current,
+    int goal,
+    IconData icon,
+    Color color,
+  ) {
+    final progress = (current / goal).clamp(0.0, 1.0);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    '$current / $goal',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${(progress * 100).toInt()}%',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: AppColors.background,
+            color: color,
+            minHeight: 8,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingItem(IconData icon, String label, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.textSecondary),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(label, style: AppTextStyles.body),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-        ],
+      child: ListTile(
+        leading: Icon(icon, color: AppColors.textSecondary),
+        title: Text(label, style: AppTextStyles.body),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Logged out successfully'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+ }
 }

@@ -144,38 +144,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: AppSpacing.md),
                       
                       SizedBox(
-                        height: 180,
+                        height: 160,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: provider.badges.length,
                           itemBuilder: (context, index) {
                             final badge = provider.badges[index];
                             return Container(
-                              width: 140,
+                              width: 130,
+                              height: 160,
                               margin: const EdgeInsets.only(right: AppSpacing.md),
-                              padding: const EdgeInsets.all(AppSpacing.md),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: badge.color,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     badge.icon,
-                                    style: const TextStyle(fontSize: 48),
+                                    style: const TextStyle(fontSize: 40),
                                   ),
-                                  const SizedBox(height: AppSpacing.sm),
+                                  const SizedBox(height: 8),
                                   Text(
                                     badge.title,
-                                    style: AppTextStyles.heading3,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                     textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    badge.description,
-                                    style: AppTextStyles.caption,
-                                    textAlign: TextAlign.center,
+                                  const SizedBox(height: 4),
+                                  Flexible(
+                                    child: Text(
+                                      badge.description,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black87,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                               ),
