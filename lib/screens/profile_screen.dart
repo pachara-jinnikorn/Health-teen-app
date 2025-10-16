@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_data_provider.dart';
 import '../utils/constants.dart';
+import 'login_screen.dart';  // เพิ่ม import หน้า Login
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -453,35 +454,75 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // แก้ไข method _showLogoutDialog ให้ไปหน้า Login
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+      builder: (BuildContext dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.logout, color: AppColors.error),
+            const SizedBox(width: 8),
+            const Text('Logout'),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to logout?\nYou will need to sign in again.',
+          style: TextStyle(fontSize: 14),
+        ),
         actions: [
+          // ปุ่ม Cancel
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
+          
+          // ปุ่ม Logout
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              // ปิด dialog
+              Navigator.pop(dialogContext);
+              
+              // ไปหน้า Login และลบ history ทั้งหมด
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false, // ลบทุกหน้า ไม่ให้กด back กลับได้
+              );
+              
+              // แสดง SnackBar (optional)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Logged out successfully'),
+                  content: Text('Logged out successfully 👋'),
                   backgroundColor: AppColors.success,
+                  duration: Duration(seconds: 2),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Logout'),
+            child: const Text(
+              'Logout',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
     );
- }
+  }
 }
