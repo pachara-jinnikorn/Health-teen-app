@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
+import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -25,14 +26,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       // TODO: เพิ่ม logic การ login ตรงนี้
       await Future.delayed(const Duration(seconds: 2));
-      
+
       setState(() => _isLoading = false);
-      
-      // Navigate to home screen
+
       // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+
     }
   }
 
@@ -50,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 40),
-                  
+
                   // Header
                   const Text(
                     'Health Teen',
@@ -203,32 +208,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Social Login Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSocialButton(
-                          label: 'Google',
-                          icon: Icons.g_mobiledata,
-                          onPressed: () {
-                            // TODO: Google login
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSocialButton(
-                          label: 'Facebook',
-                          icon: Icons.facebook,
-                          onPressed: () {
-                            // TODO: Facebook login
-                          },
-                        ),
-                      ),
-                    ],
+                 
+                  // Social Login Button
+                  _buildSocialButton(
+                    label: 'Continue with Google',
+                    icon: Icons.g_mobiledata,
+                    onPressed: () {
+                      // TODO: Google login
+                    },
                   ),
-                  const SizedBox(height: 40),
 
+                  const SizedBox(height: 40),
                   // Sign Up Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/health_data_provider.dart';
 import 'providers/community_provider.dart';
 import 'providers/chat_provider.dart';
-import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -36,7 +36,7 @@ class HealthTeenApp extends StatelessWidget {
           ),
           useMaterial3: true,
         ),
-        home: const MainScreen(),
+        home: const LoginScreen(),
       ),
     );
   }
