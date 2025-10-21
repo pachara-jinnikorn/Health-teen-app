@@ -25,3 +25,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/.dart_tool
+.dart_tool/flutter_build/dart_plugin_registrant.dart
