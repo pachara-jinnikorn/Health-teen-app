@@ -1,63 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  bool isAuthenticated = false;
+  bool isLoading = true;
   User? currentUser;
-  String? role;
-  bool isLoading = false;
 
   AuthProvider() {
-    // Begin with auth state 
-    _authService.userChanges.listen((user) async {
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    _auth.authStateChanges().listen((user) {
       currentUser = user;
-      if (user != null) {
-        role = await _authService.getUserRole(user.uid);
-      } else {
-        role = null;
-      }
+      isAuthenticated = user != null;
+      isLoading = false;
       notifyListeners();
     });
   }
 
-  // ✅ Login
+  Future<void> signUp(String email, String password, String displayName) async {
+    try {
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await _db.collection('users').doc(result.user!.uid).set({
+        'email': email,
+        'displayName': displayName,
+        'role': 'free',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("SignUp error: $e");
+      rethrow;
+    }
+  }
+
   Future<void> login(String email, String password) async {
     try {
-      isLoading = true;
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
       notifyListeners();
-      await _authService.login(email, password);
     } catch (e) {
       debugPrint("Login error: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      rethrow;
     }
   }
 
-  // ✅ Register
-  Future<void> register(String email, String password) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-      await _authService.register(email, password);
-    } catch (e) {
-      debugPrint("Register error: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ✅ Logout
   Future<void> logout() async {
-    await _authService.logout();
+    await _auth.signOut();
+    isAuthenticated = false;
+    notifyListeners();
   }
-
-  // ✅ Helper for UI
-  bool get isAuthenticated => currentUser != null;
-  bool get isAdmin => role == 'admin';
-  bool get isPremium => role == 'premium';
-  bool get isFree => role == 'free';
 }
