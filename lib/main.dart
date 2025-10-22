@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // << เพิ่ม
-import 'firebase_options.dart'; // << เพิ่ม
-
-import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+
 import 'providers/auth_provider.dart';
 import 'providers/health_data_provider.dart';
 import 'screens/login_screen.dart';
@@ -12,15 +10,10 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-<<<<<<< HEAD
-
-=======
->>>>>>> upstream/packing
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-<<<<<<< HEAD
   runApp(
     MultiProvider(
       providers: [
@@ -30,9 +23,6 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
-=======
-  runApp(const HealthTeenApp());
->>>>>>> upstream/packing
 }
 
 class MyApp extends StatelessWidget {

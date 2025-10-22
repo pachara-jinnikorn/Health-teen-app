@@ -49,3 +49,5 @@ next-env.d.ts
 .dart_tool/flutter_build/6d8ecb06ecf5b3c72eca76a05a32b277/app.dill
 .dart_tool/flutter_build/6d8ecb06ecf5b3c72eca76a05a32b277/.filecache
 .dart_tool/
+pubspec.lock
+/.dart_tool
