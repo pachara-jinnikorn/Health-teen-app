@@ -3,46 +3,59 @@ import 'package:firebase_core/firebase_core.dart'; // << เพิ่ม
 import 'firebase_options.dart'; // << เพิ่ม
 
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'providers/auth_provider.dart';
 import 'providers/health_data_provider.dart';
-import 'providers/community_provider.dart';
-import 'providers/chat_provider.dart';
 import 'screens/login_screen.dart';
-import 'utils/constants.dart';
+import 'screens/home_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+<<<<<<< HEAD
+
+=======
+>>>>>>> upstream/packing
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+<<<<<<< HEAD
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => HealthDataProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+=======
   runApp(const HealthTeenApp());
+>>>>>>> upstream/packing
 }
 
-class HealthTeenApp extends StatelessWidget {
-  const HealthTeenApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HealthDataProvider()),
-        ChangeNotifierProvider(create: (_) => CommunityProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-      ],
-      child: MaterialApp(
-        title: 'Health Teen',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primaryColor: AppColors.primary,
-          scaffoldBackgroundColor: AppColors.background,
-          fontFamily: 'Inter',
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-        ),
-        home: const LoginScreen(),
+    return MaterialApp(
+      title: 'Health Teen',
+      debugShowCheckedModeBanner: false,
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          if (auth.isLoading) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (!auth.isAuthenticated) {
+            return const LoginScreen();
+          } else {
+            return const HomeScreen();
+          }
+        },
       ),
     );
   }

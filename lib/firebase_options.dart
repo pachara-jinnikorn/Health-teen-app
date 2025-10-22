@@ -21,6 +21,13 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+<<<<<<< HEAD
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+=======
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for android - '
           'you can reconfigure this by running the FlutterFire CLI again.',
@@ -35,6 +42,7 @@ class DefaultFirebaseOptions {
           'DefaultFirebaseOptions have not been configured for macos - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
+>>>>>>> upstream/packing
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
@@ -49,6 +57,8 @@ class DefaultFirebaseOptions {
     }
   }
 
+<<<<<<< HEAD
+=======
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDXvxPh41tpuP_A8gEzMSv2h4b9GR6jFzQ',
     appId: '1:685202357285:web:5776f7ae74e49d99bbd3cc',
@@ -59,6 +69,7 @@ class DefaultFirebaseOptions {
     measurementId: 'G-QEVZEXG70B',
   );
 
+>>>>>>> upstream/packing
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDXvxPh41tpuP_A8gEzMSv2h4b9GR6jFzQ',
     appId: '1:685202357285:web:5776f7ae74e49d99bbd3cc',
@@ -69,4 +80,43 @@ class DefaultFirebaseOptions {
     measurementId: 'G-QEVZEXG70B',
   );
 
+<<<<<<< HEAD
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyB8xn-5v63yWJC_Xbplr9aOK0eNcDHbjgE',
+    appId: '1:685202357285:android:38c314bc0eed4ba8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCz3fdbvI38aKf7GlRa3NPil8YFau9Fml4',
+    appId: '1:685202357285:ios:7d0842ca7e4370b8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    iosBundleId: 'com.example.healthTeen',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCz3fdbvI38aKf7GlRa3NPil8YFau9Fml4',
+    appId: '1:685202357285:ios:7d0842ca7e4370b8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    iosBundleId: 'com.example.healthTeen',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDXvxPh41tpuP_A8gEzMSv2h4b9GR6jFzQ',
+    appId: '1:685202357285:web:5776f7ae74e49d99bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    authDomain: 'health-care-b5f05.firebaseapp.com',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    measurementId: 'G-QEVZEXG70B',
+  );
 }
+=======
+}
+>>>>>>> upstream/packing
