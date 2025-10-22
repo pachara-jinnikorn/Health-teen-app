@@ -41,49 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDF-O2Yvc552if4YNON0LLlE0bNBrJAWRQ',
-    appId: '1:831444977679:web:dd4e20bfe3fba091d07b7a',
-    messagingSenderId: '831444977679',
-    projectId: 'health-teen-cloud',
-    authDomain: 'health-teen-cloud.firebaseapp.com',
-    storageBucket: 'health-teen-cloud.firebasestorage.app',
-    measurementId: 'G-SND8MDQP3K',
+    apiKey: 'AIzaSyDXvxPh41tpuP_A8gEzMSv2h4b9GR6jFzQ',
+    appId: '1:685202357285:web:5776f7ae74e49d99bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    authDomain: 'health-care-b5f05.firebaseapp.com',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    measurementId: 'G-QEVZEXG70B',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCQ56G-t-Y6xrmLr6dhtxTAnbiFVCbAWVU',
-    appId: '1:831444977679:android:48830020b1cd19f1d07b7a',
-    messagingSenderId: '831444977679',
-    projectId: 'health-teen-cloud',
-    storageBucket: 'health-teen-cloud.firebasestorage.app',
+    apiKey: 'AIzaSyB8xn-5v63yWJC_Xbplr9aOK0eNcDHbjgE',
+    appId: '1:685202357285:android:38c314bc0eed4ba8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCe7CKc3LvrlLSwwEbqvh0vh4AX2HSnLl0',
-    appId: '1:831444977679:ios:d1e80d5dc589ecc0d07b7a',
-    messagingSenderId: '831444977679',
-    projectId: 'health-teen-cloud',
-    storageBucket: 'health-teen-cloud.firebasestorage.app',
-    iosBundleId: 'com.healthteen.app',
+    apiKey: 'AIzaSyCz3fdbvI38aKf7GlRa3NPil8YFau9Fml4',
+    appId: '1:685202357285:ios:7d0842ca7e4370b8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    iosBundleId: 'com.example.healthTeen',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCe7CKc3LvrlLSwwEbqvh0vh4AX2HSnLl0',
-    appId: '1:831444977679:ios:d1e80d5dc589ecc0d07b7a',
-    messagingSenderId: '831444977679',
-    projectId: 'health-teen-cloud',
-    storageBucket: 'health-teen-cloud.firebasestorage.app',
-    iosBundleId: 'com.healthteen.app',
+    apiKey: 'AIzaSyCz3fdbvI38aKf7GlRa3NPil8YFau9Fml4',
+    appId: '1:685202357285:ios:7d0842ca7e4370b8bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    iosBundleId: 'com.example.healthTeen',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDF-O2Yvc552if4YNON0LLlE0bNBrJAWRQ',
-    appId: '1:831444977679:web:5c701f889652c4fad07b7a',
-    messagingSenderId: '831444977679',
-    projectId: 'health-teen-cloud',
-    authDomain: 'health-teen-cloud.firebaseapp.com',
-    storageBucket: 'health-teen-cloud.firebasestorage.app',
-    measurementId: 'G-BKKTQBY95W',
+    apiKey: 'AIzaSyDXvxPh41tpuP_A8gEzMSv2h4b9GR6jFzQ',
+    appId: '1:685202357285:web:5776f7ae74e49d99bbd3cc',
+    messagingSenderId: '685202357285',
+    projectId: 'health-care-b5f05',
+    authDomain: 'health-care-b5f05.firebaseapp.com',
+    storageBucket: 'health-care-b5f05.firebasestorage.app',
+    measurementId: 'G-QEVZEXG70B',
   );
-
 }
