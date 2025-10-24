@@ -10,7 +10,8 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -23,7 +24,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -48,7 +50,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final user = await _authService.register(
           _emailController.text.trim(),
           _passwordController.text.trim(),
-          displayName: _nameController.text.trim(),
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
         );
 
         if (user != null && mounted) {
@@ -58,7 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               backgroundColor: Color(0xFF14B8A6),
             ),
           );
-          Navigator.pop(context); // ✅ กลับไปหน้า Login
+          Navigator.pop(context);
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,34 +93,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
             key: _formKey,
             child: Column(
               children: [
-                _buildTextField(_nameController, 'Full Name', Icons.person_outline),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(_firstNameController, 'First Name', Icons.person_outline),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(_lastNameController, 'Last Name', Icons.person_outline),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 _buildTextField(_emailController, 'Email', Icons.email_outlined),
                 const SizedBox(height: 16),
-                _buildTextField(_passwordController, 'Password', Icons.lock_outline,
-                    obscureText: !_isPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () =>
-                          setState(() => _isPasswordVisible = !_isPasswordVisible),
-                    )),
+                _buildTextField(
+                  _passwordController,
+                  'Password',
+                  Icons.lock_outline,
+                  obscureText: !_isPasswordVisible,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () =>
+                        setState(() => _isPasswordVisible = !_isPasswordVisible),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                _buildTextField(_confirmPasswordController, 'Confirm Password',
-                    Icons.lock_outline,
-                    obscureText: !_isConfirmPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () => setState(() =>
-                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
-                    )),
+                _buildTextField(
+                  _confirmPasswordController,
+                  'Confirm Password',
+                  Icons.lock_outline,
+                  obscureText: !_isConfirmPasswordVisible,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () => setState(() =>
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                  ),
+                ),
                 const SizedBox(height: 20),
 
                 CheckboxListTile(
@@ -141,9 +157,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Create Account',
+                        : const Text(
+                            'Create Account',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],
