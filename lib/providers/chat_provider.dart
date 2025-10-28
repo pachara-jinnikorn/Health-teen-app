@@ -18,7 +18,6 @@ class ChatProvider extends ChangeNotifier {
 
   ChatProvider() {
     _loadConversations();
-    _createAIConversationIfNeeded();
   }
 
   /// ✅ Load conversations from Firestore
@@ -33,50 +32,77 @@ class ChatProvider extends ChangeNotifier {
         .snapshots()
         .listen((snapshot) {
       _conversations = snapshot.docs
-          .map((doc) => Conversation.fromJson(doc.data()))
+          .map((doc) {
+            try {
+              return Conversation.fromJson(doc.data());
+            } catch (e) {
+              debugPrint('❌ Error parsing conversation: $e');
+              return null;
+            }
+          })
+          .where((conv) => conv != null)
+          .cast<Conversation>()
           .toList();
       notifyListeners();
     });
   }
 
-  /// ✅ Create AI conversation if it doesn't exist
-  Future<void> _createAIConversationIfNeeded() async {
+  /// ✅ PUBLIC method to ensure AI conversation exists (can be called from UI)
+  Future<void> ensureAIConversationExists() async {
     final userId = _auth.currentUser?.uid;
-    if (userId == null) return;
+    if (userId == null) {
+      debugPrint('❌ No user logged in');
+      return;
+    }
 
-    final aiConvId = 'ai_$userId';
-    final aiConvRef = _firestore.collection('conversations').doc(aiConvId);
-    final aiConvDoc = await aiConvRef.get();
+    try {
+      final aiConvId = 'ai_$userId';
+      final aiConvRef = _firestore.collection('conversations').doc(aiConvId);
+      final aiConvDoc = await aiConvRef.get();
 
-    if (!aiConvDoc.exists) {
-      final aiConversation = Conversation(
-        id: aiConvId,
-        name: 'Dr. Wellness',
-        avatar: '👨‍⚕️',
-        lastMessage: 'Hi! I\'m Dr. Wellness, your AI health coach.',
-        timestamp: DateTime.now(),
-        isAI: true,
-        participants: [userId],
-      );
+      if (!aiConvDoc.exists) {
+        debugPrint('✅ Creating AI conversation for user: $userId');
+        
+        // Write data directly as a Map to ensure correct values
+        await aiConvRef.set({
+          'id': aiConvId,
+          'name': 'Dr. Wellness',
+          'avatar': '👨‍⚕️',
+          'lastMessage': 'Hi! I\'m Dr. Wellness, your AI health coach.',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isAI': true,
+          'participants': [userId],
+        });
 
-      await aiConvRef.set(aiConversation.toJson());
+        // Wait a moment for the document to be created
+        await Future.delayed(const Duration(milliseconds: 200));
 
-      // Add welcome message
-      final welcomeMessage = ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        senderId: 'ai',
-        senderName: 'Dr. Wellness',
-        content: 'Hi! I\'m Dr. Wellness, your AI health coach. How can I help you today?',
-        timestamp: DateTime.now(),
-        isMe: false,
-      );
+        // Add welcome message
+        final welcomeMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+        
+        await _firestore
+            .collection('conversations')
+            .doc(aiConvId)
+            .collection('messages')
+            .doc(welcomeMessageId)
+            .set({
+          'id': welcomeMessageId,
+          'senderId': 'ai',
+          'senderName': 'Dr. Wellness',
+          'content': 'Hi! I\'m Dr. Wellness, your AI health coach. How can I help you today?',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
 
-      await _firestore
-          .collection('conversations')
-          .doc(aiConvId)
-          .collection('messages')
-          .doc(welcomeMessage.id)
-          .set(welcomeMessage.toJson());
+        debugPrint('✅ AI conversation created successfully!');
+      } else {
+        debugPrint('✅ AI conversation already exists');
+        
+        // Check if the data is correct
+        final data = aiConvDoc.data();
+        debugPrint('📋 AI conversation data: $data');
+      }
+    } catch (e) {
+      debugPrint('❌ Error creating AI conversation: $e');
     }
   }
 
@@ -91,7 +117,16 @@ class ChatProvider extends ChangeNotifier {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ChatMessage.fromJson(doc.data(), currentUserId))
+            .map((doc) {
+              try {
+                return ChatMessage.fromJson(doc.data(), currentUserId);
+              } catch (e) {
+                debugPrint('❌ Error parsing message: $e');
+                return null;
+              }
+            })
+            .where((msg) => msg != null)
+            .cast<ChatMessage>()
             .toList());
   }
 
@@ -110,27 +145,24 @@ class ChatProvider extends ChangeNotifier {
 
       final messageId = DateTime.now().millisecondsSinceEpoch.toString();
       
-      final newMessage = ChatMessage(
-        id: messageId,
-        senderId: user.uid,
-        senderName: displayName,
-        content: content,
-        timestamp: DateTime.now(),
-        isMe: true,
-      );
-
-      // Add message to subcollection
+      // Write message data directly
       await _firestore
           .collection('conversations')
           .doc(conversationId)
           .collection('messages')
           .doc(messageId)
-          .set(newMessage.toJson());
+          .set({
+        'id': messageId,
+        'senderId': user.uid,
+        'senderName': displayName,
+        'content': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
       // Update conversation last message
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': content,
-        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
       notifyListeners();
@@ -158,26 +190,24 @@ class ChatProvider extends ChangeNotifier {
 
       // Add user message
       final userMessageId = DateTime.now().millisecondsSinceEpoch.toString();
-      final userMessage = ChatMessage(
-        id: userMessageId,
-        senderId: user.uid,
-        senderName: displayName,
-        content: content,
-        timestamp: DateTime.now(),
-        isMe: true,
-      );
-
+      
       await _firestore
           .collection('conversations')
           .doc(conversationId)
           .collection('messages')
           .doc(userMessageId)
-          .set(userMessage.toJson());
+          .set({
+        'id': userMessageId,
+        'senderId': user.uid,
+        'senderName': displayName,
+        'content': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
       // Update conversation
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': content,
-        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
       // Show typing indicator
@@ -193,26 +223,24 @@ class ChatProvider extends ChangeNotifier {
 
       // Add AI message
       final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
-      final aiMessage = ChatMessage(
-        id: aiMessageId,
-        senderId: 'ai',
-        senderName: 'Dr. Wellness',
-        content: aiResponse,
-        timestamp: DateTime.now(),
-        isMe: false,
-      );
-
+      
       await _firestore
           .collection('conversations')
           .doc(conversationId)
           .collection('messages')
           .doc(aiMessageId)
-          .set(aiMessage.toJson());
+          .set({
+        'id': aiMessageId,
+        'senderId': 'ai',
+        'senderName': 'Dr. Wellness',
+        'content': aiResponse,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
       // Update conversation
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': aiResponse,
-        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
       _isAITyping = false;
@@ -252,20 +280,16 @@ class ChatProvider extends ChangeNotifier {
       final displayName = lastName.isNotEmpty ? '$firstName $lastName' : firstName;
 
       final convId = _firestore.collection('conversations').doc().id;
-      final newConversation = Conversation(
-        id: convId,
-        name: displayName,
-        avatar: '👤',
-        lastMessage: 'Start a conversation',
-        timestamp: DateTime.now(),
-        isAI: false,
-        participants: [currentUserId, otherUserId],
-      );
-
-      await _firestore
-          .collection('conversations')
-          .doc(convId)
-          .set(newConversation.toJson());
+      
+      await _firestore.collection('conversations').doc(convId).set({
+        'id': convId,
+        'name': displayName,
+        'avatar': '👤',
+        'lastMessage': 'Start a conversation',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isAI': false,
+        'participants': [currentUserId, otherUserId],
+      });
 
       return convId;
     } catch (e) {
