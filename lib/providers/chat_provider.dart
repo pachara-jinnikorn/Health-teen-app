@@ -17,24 +17,38 @@ class ChatProvider extends ChangeNotifier {
   bool get isAITyping => _isAITyping;
 
   ChatProvider() {
+    _initializeChat();
+  }
+
+  /// ✅ Initialize chat by creating AI conversation first
+  Future<void> _initializeChat() async {
+    await ensureAIConversationExists();
     _loadConversations();
   }
 
   /// ✅ Load conversations from Firestore
   void _loadConversations() {
     final userId = _auth.currentUser?.uid;
-    if (userId == null) return;
+    if (userId == null) {
+      debugPrint('❌ No user logged in');
+      return;
+    }
+
+    debugPrint('✅ Loading conversations for user: $userId');
 
     _firestore
         .collection('conversations')
         .where('participants', arrayContains: userId)
-        .orderBy('timestamp', descending: true)
         .snapshots()
         .listen((snapshot) {
+      debugPrint('📨 Got ${snapshot.docs.length} conversations');
+      
       _conversations = snapshot.docs
           .map((doc) {
             try {
-              return Conversation.fromJson(doc.data());
+              final data = doc.data();
+              debugPrint('📋 Conversation data: $data');
+              return Conversation.fromJson(data);
             } catch (e) {
               debugPrint('❌ Error parsing conversation: $e');
               return null;
@@ -43,11 +57,18 @@ class ChatProvider extends ChangeNotifier {
           .where((conv) => conv != null)
           .cast<Conversation>()
           .toList();
+
+      // Sort by timestamp (newest first)
+      _conversations.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      
+      debugPrint('✅ Loaded ${_conversations.length} conversations');
       notifyListeners();
+    }, onError: (error) {
+      debugPrint('❌ Error loading conversations: $error');
     });
   }
 
-  /// ✅ PUBLIC method to ensure AI conversation exists (can be called from UI)
+  /// ✅ PUBLIC method to ensure AI conversation exists
   Future<void> ensureAIConversationExists() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) {
@@ -63,22 +84,26 @@ class ChatProvider extends ChangeNotifier {
       if (!aiConvDoc.exists) {
         debugPrint('✅ Creating AI conversation for user: $userId');
         
-        // Write data directly as a Map to ensure correct values
+        final now = DateTime.now();
+        
+        // Create AI conversation document
         await aiConvRef.set({
           'id': aiConvId,
           'name': 'Dr. Wellness',
           'avatar': '👨‍⚕️',
           'lastMessage': 'Hi! I\'m Dr. Wellness, your AI health coach.',
-          'timestamp': FieldValue.serverTimestamp(),
+          'timestamp': Timestamp.fromDate(now),
           'isAI': true,
           'participants': [userId],
         });
 
-        // Wait a moment for the document to be created
-        await Future.delayed(const Duration(milliseconds: 200));
+        debugPrint('✅ AI conversation document created');
+
+        // Wait a moment for Firestore to process
+        await Future.delayed(const Duration(milliseconds: 300));
 
         // Add welcome message
-        final welcomeMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+        final welcomeMessageId = now.millisecondsSinceEpoch.toString();
         
         await _firestore
             .collection('conversations')
@@ -90,19 +115,18 @@ class ChatProvider extends ChangeNotifier {
           'senderId': 'ai',
           'senderName': 'Dr. Wellness',
           'content': 'Hi! I\'m Dr. Wellness, your AI health coach. How can I help you today?',
-          'timestamp': FieldValue.serverTimestamp(),
+          'timestamp': Timestamp.fromDate(now),
         });
 
-        debugPrint('✅ AI conversation created successfully!');
+        debugPrint('✅ Welcome message added');
       } else {
         debugPrint('✅ AI conversation already exists');
-        
-        // Check if the data is correct
-        final data = aiConvDoc.data();
-        debugPrint('📋 AI conversation data: $data');
       }
     } catch (e) {
       debugPrint('❌ Error creating AI conversation: $e');
+      // Try again after a delay
+      await Future.delayed(const Duration(seconds: 2));
+      await ensureAIConversationExists();
     }
   }
 
@@ -116,18 +140,21 @@ class ChatProvider extends ChangeNotifier {
         .collection('messages')
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) {
-              try {
-                return ChatMessage.fromJson(doc.data(), currentUserId);
-              } catch (e) {
-                debugPrint('❌ Error parsing message: $e');
-                return null;
-              }
-            })
-            .where((msg) => msg != null)
-            .cast<ChatMessage>()
-            .toList());
+        .map((snapshot) {
+          debugPrint('📨 Got ${snapshot.docs.length} messages for conversation: $conversationId');
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return ChatMessage.fromJson(doc.data(), currentUserId);
+                } catch (e) {
+                  debugPrint('❌ Error parsing message: $e');
+                  return null;
+                }
+              })
+              .where((msg) => msg != null)
+              .cast<ChatMessage>()
+              .toList();
+        });
   }
 
   /// ✅ Send a regular message (non-AI)
@@ -136,7 +163,6 @@ class ChatProvider extends ChangeNotifier {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      // Get user data
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final userData = userDoc.data();
       final firstName = userData?['firstname'] ?? 'User';
@@ -145,7 +171,6 @@ class ChatProvider extends ChangeNotifier {
 
       final messageId = DateTime.now().millisecondsSinceEpoch.toString();
       
-      // Write message data directly
       await _firestore
           .collection('conversations')
           .doc(conversationId)
@@ -159,7 +184,6 @@ class ChatProvider extends ChangeNotifier {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // Update conversation last message
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': content,
         'timestamp': FieldValue.serverTimestamp(),
@@ -167,7 +191,7 @@ class ChatProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      debugPrint('❌ Error sending message: $e');
     }
   }
 
@@ -181,7 +205,6 @@ class ChatProvider extends ChangeNotifier {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      // Get user data
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final userData = userDoc.data();
       final firstName = userData?['firstname'] ?? 'User';
@@ -204,7 +227,6 @@ class ChatProvider extends ChangeNotifier {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // Update conversation
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': content,
         'timestamp': FieldValue.serverTimestamp(),
@@ -237,7 +259,6 @@ class ChatProvider extends ChangeNotifier {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // Update conversation
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': aiResponse,
         'timestamp': FieldValue.serverTimestamp(),
@@ -246,7 +267,7 @@ class ChatProvider extends ChangeNotifier {
       _isAITyping = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error sending AI message: $e');
+      debugPrint('❌ Error sending AI message: $e');
       _isAITyping = false;
       notifyListeners();
     }
@@ -268,7 +289,7 @@ class ChatProvider extends ChangeNotifier {
       for (var doc in existingConv.docs) {
         final participants = List<String>.from(doc.data()['participants']);
         if (participants.contains(otherUserId)) {
-          return doc.id; // Return existing conversation
+          return doc.id;
         }
       }
 
@@ -293,7 +314,7 @@ class ChatProvider extends ChangeNotifier {
 
       return convId;
     } catch (e) {
-      debugPrint('Error creating conversation: $e');
+      debugPrint('❌ Error creating conversation: $e');
       return null;
     }
   }

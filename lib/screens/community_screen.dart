@@ -22,17 +22,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Community', style: AppTextStyles.heading1),
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () {},
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Community', style: AppTextStyles.heading1),
               ),
             ),
 

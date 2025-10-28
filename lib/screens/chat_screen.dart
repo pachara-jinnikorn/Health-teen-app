@@ -4,35 +4,8 @@ import '../providers/chat_provider.dart';
 import '../utils/constants.dart';
 import 'conversation_screen.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  bool _isInitializing = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // Ensure AI conversation is created when screen loads
-    _initializeChat();
-  }
-
-  Future<void> _initializeChat() async {
-    // Wait for AI conversation to be created
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Manually trigger AI conversation creation if needed
-    final provider = context.read<ChatProvider>();
-    await provider.ensureAIConversationExists();
-    
-    if (mounted) {
-      setState(() => _isInitializing = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,18 +15,9 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Health Teen', style: AppTextStyles.heading1),
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Text('Health Teen', style: AppTextStyles.heading1),
             ),
             
             // Chat List
@@ -70,42 +34,27 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, provider, _) {
-                  // Show loading only during initial setup
-                  if (_isInitializing && provider.conversations.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Setting up your chat...'),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // Show empty state if no conversations after initialization
+                  // Show loading while conversations are being loaded
                   if (provider.conversations.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 64,
-                            color: AppColors.textSecondary.withOpacity(0.5),
-                          ),
+                          const CircularProgressIndicator(),
                           const SizedBox(height: 16),
-                          Text(
-                            'No conversations yet',
-                            style: AppTextStyles.heading3.copyWith(
-                              color: AppColors.textSecondary,
+                          const Text('Loading your chats...'),
+                          const SizedBox(height: 24),
+                          // Add a manual refresh button
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await provider.ensureAIConversationExists();
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Refresh'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Dr. Wellness AI chat will appear here',
-                            style: AppTextStyles.bodySmall,
                           ),
                         ],
                       ),
