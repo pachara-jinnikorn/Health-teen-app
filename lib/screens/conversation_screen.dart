@@ -187,7 +187,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           child: Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),

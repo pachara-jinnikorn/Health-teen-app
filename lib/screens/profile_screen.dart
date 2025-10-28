@@ -108,7 +108,7 @@ class ProfileScreen extends StatelessWidget {
                       return Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [AppColors.primary, AppColors.secondary],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -453,7 +453,7 @@ class ProfileScreen extends StatelessWidget {
                       onPressed: () => _showLogoutDialog(context),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.error),
+                        side: const BorderSide(color: AppColors.error),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -466,7 +466,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
 
                   // App Version
-                  Text(
+                  const Text(
                     'Version 1.0.0',
                     style: AppTextStyles.caption,
                   ),
@@ -598,11 +598,11 @@ class ProfileScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.logout, color: AppColors.error),
-            const SizedBox(width: 8),
-            const Text('Logout'),
+            SizedBox(width: 8),
+            Text('Logout'),
           ],
         ),
         content: const Text(
@@ -612,7 +612,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
+            child: const Text(
               'Cancel',
               style: TextStyle(
                 color: AppColors.textSecondary,

@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [AppColors.primary, AppColors.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -192,10 +192,10 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               
               // Quick Actions
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Quick Actions", style: AppTextStyles.heading2),
+                  Text("Quick Actions", style: AppTextStyles.heading2),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),

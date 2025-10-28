@@ -70,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text(
+                              const Text(
                                 'Last 7 Days +5%',
                                 style: TextStyle(
                                   color: AppColors.success,
@@ -101,17 +101,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           },
                                         ),
                                       ),
-                                      leftTitles: AxisTitles(
+                                      leftTitles: const AxisTitles(
                                         sideTitles: SideTitles(showTitles: false),
                                       ),
-                                      topTitles: AxisTitles(
+                                      topTitles: const AxisTitles(
                                         sideTitles: SideTitles(showTitles: false),
                                       ),
-                                      rightTitles: AxisTitles(
+                                      rightTitles: const AxisTitles(
                                         sideTitles: SideTitles(showTitles: false),
                                       ),
                                     ),
-                                    gridData: FlGridData(show: false),
+                                    gridData: const FlGridData(show: false),
                                     borderData: FlBorderData(show: false),
                                     barGroups: provider.healthData.history
                                         .asMap()

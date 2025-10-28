@@ -346,7 +346,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                   color: AppColors.success.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.check_circle, color: AppColors.success, size: 24),
+                child: const Icon(Icons.check_circle, color: AppColors.success, size: 24),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -372,7 +372,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
             ),
             child: Text(
               reward,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.success,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
@@ -511,7 +511,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
