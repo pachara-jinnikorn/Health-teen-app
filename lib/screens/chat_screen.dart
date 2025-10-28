@@ -43,6 +43,20 @@ class ChatScreen extends StatelessWidget {
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, provider, _) {
+                  // ✅ Show loading indicator while fetching
+                  if (provider.conversations.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Loading conversations...'),
+                        ],
+                      ),
+                    );
+                  }
+
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     itemCount: provider.conversations.length,
@@ -127,8 +141,10 @@ class ChatScreen extends StatelessWidget {
       return '${difference.inDays}d';
     } else if (difference.inHours > 0) {
       return '${difference.inHours}h';
-    } else {
+    } else if (difference.inMinutes > 0) {
       return '${difference.inMinutes}m';
+    } else {
+      return 'now';
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../providers/community_provider.dart';
 import '../utils/constants.dart';
+import '../screens/comments_screen.dart'; // ✅ Import comments screen
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -58,6 +59,7 @@ class PostCard extends StatelessWidget {
           // Actions
           Row(
             children: [
+              // Like button
               IconButton(
                 icon: Icon(
                   post.isLiked ? Icons.favorite : Icons.favorite_border,
@@ -68,12 +70,38 @@ class PostCard extends StatelessWidget {
                 },
               ),
               Text('${post.likes}', style: AppTextStyles.bodySmall),
-              const SizedBox(width: AppSpacing.md),
-              Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
-              const SizedBox(width: AppSpacing.xs),
-              Text('${post.comments}', style: AppTextStyles.bodySmall),
-              const SizedBox(width: AppSpacing.md),
-              Icon(Icons.share_outlined, color: AppColors.textSecondary),
+              
+              const SizedBox(width: AppSpacing.sm),
+              
+              // ✅ Comment button (now clickable!)
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CommentsScreen(post: post),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      Text('${post.comments}', style: AppTextStyles.bodySmall),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ],
