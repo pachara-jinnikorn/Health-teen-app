@@ -8,7 +8,7 @@ class CommunityProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
   List<Post> _posts = [];
-  bool _isLoading = false;
+  final bool _isLoading = false;
   
   List<Post> get posts => _posts;
   bool get isLoading => _isLoading;
