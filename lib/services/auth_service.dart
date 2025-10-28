@@ -13,11 +13,15 @@ class AuthService {
     final calories = 1500 + r.nextInt(1200); // 1500–2700
     final exerciseMinutes = 20 + r.nextInt(81); // 20–100
     final sleepHours = 5 + r.nextInt(5); // 5–9
+    // ✅ ประมาณจำนวนก้าวจาก exerciseMinutes
+    final steps = (exerciseMinutes * (100 + r.nextInt(51)))
+        .toInt(); // 100–150 ก้าวต่อนาที
 
     await _firestore.collection('users').doc(uid).collection('healthLogs').add({
       'calories': calories,
       'exerciseMinutes': exerciseMinutes,
       'sleepHours': sleepHours,
+      'steps': steps, // ✅ เพิ่มฟิลด์นี้
       'logDate': logDate,
       'createdAt': FieldValue.serverTimestamp(),
       'source': reason, // 'register' | 'login'
