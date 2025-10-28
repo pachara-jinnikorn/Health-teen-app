@@ -95,6 +95,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
             Expanded(
               child: Consumer<CommunityProvider>(
                 builder: (context, provider, _) {
+                  // ✅ Show loading indicator
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // ✅ Show empty state
+                  if (provider.posts.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.article_outlined,
+                            size: 64,
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No posts yet',
+                            style: AppTextStyles.heading3.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Be the first to share something!',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     itemCount: provider.posts.length,
@@ -205,17 +238,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.isNotEmpty) {
-                context.read<CommunityProvider>().addPost(controller.text);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Post created successfully! 🎉'),
-                    backgroundColor: AppColors.success,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                try {
+                  await context.read<CommunityProvider>().addPost(controller.text);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Post created successfully! 🎉'),
+                        backgroundColor: AppColors.success,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error creating post: $e'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
               }
             },
             style: ElevatedButton.styleFrom(

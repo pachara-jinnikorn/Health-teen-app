@@ -1,13 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ChatMessage {
   String id;
-  String sender;
+  String senderId;
+  String senderName;
   String content;
   DateTime timestamp;
   bool isMe;
 
   ChatMessage({
     required this.id,
-    required this.sender,
+    required this.senderId,
+    required this.senderName,
     required this.content,
     required this.timestamp,
     required this.isMe,
@@ -16,22 +20,23 @@ class ChatMessage {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'sender': sender,
+      'senderId': senderId,
+      'senderName': senderName,
       'content': content,
-      'timestamp': timestamp.toIso8601String(),
-      'isMe': isMe,
+      'timestamp': Timestamp.fromDate(timestamp),
     };
   }
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+  factory ChatMessage.fromJson(Map<String, dynamic> json, String currentUserId) {
+    final senderId = json['senderId'] ?? '';
+    
     return ChatMessage(
       id: json['id'] ?? '',
-      sender: json['sender'] ?? '',
+      senderId: senderId,
+      senderName: json['senderName'] ?? '',
       content: json['content'] ?? '',
-      timestamp: json['timestamp'] is String 
-          ? DateTime.parse(json['timestamp'])
-          : (json['timestamp'] as dynamic).toDate(),
-      isMe: json['isMe'] ?? false,
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isMe: senderId == currentUserId,
     );
   }
 }
@@ -43,6 +48,7 @@ class Conversation {
   String lastMessage;
   DateTime timestamp;
   bool isAI;
+  List<String> participants; // ✅ User IDs in the conversation
 
   Conversation({
     required this.id,
@@ -51,5 +57,30 @@ class Conversation {
     required this.lastMessage,
     required this.timestamp,
     this.isAI = false,
+    this.participants = const [],
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'avatar': avatar,
+      'lastMessage': lastMessage,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'isAI': isAI,
+      'participants': participants,
+    };
+  }
+
+  factory Conversation.fromJson(Map<String, dynamic> json) {
+    return Conversation(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      avatar: json['avatar'] ?? '👤',
+      lastMessage: json['lastMessage'] ?? '',
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isAI: json['isAI'] ?? false,
+      participants: List<String>.from(json['participants'] ?? []),
+    );
+  }
 }

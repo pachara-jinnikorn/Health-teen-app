@@ -2,13 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_data_provider.dart';
 import '../utils/constants.dart';
-import 'login_screen.dart';  // เพิ่ม import หน้า Login
+import 'login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _toggleMembership(BuildContext context, bool isPremium) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'role': isPremium ? 'premium' : 'free',
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isPremium
+                ? 'You are now a Premium Member 🎉'
+                : 'Your subscription was cancelled 💨',
+          ),
+          backgroundColor: isPremium ? Colors.green : Colors.orange,
+        ),
+      );
+
+      // ✅ รีโหลดหน้าปัจจุบัน
+      (context as Element).reassemble();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating membership: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -36,109 +75,209 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.lg),
-                  
-                  // Profile Card with Gradient
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Profile Picture
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(40),
+
+                  // Profile Card with Gradient - Show name from database
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user?.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      String displayName = 'User';
+                      String role = 'free';
+                      
+                      if (snapshot.hasData && snapshot.data != null) {
+                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                        if (data != null) {
+                          final firstName = data['firstname'] ?? '';
+                          final lastName = data['lastname'] ?? '';
+                          role = data['role'] ?? 'free';
+                          
+                          if (firstName.isNotEmpty && lastName.isNotEmpty) {
+                            displayName = '$firstName $lastName';
+                          } else if (firstName.isNotEmpty) {
+                            displayName = firstName;
+                          }
+                        }
+                      }
+
+                      final isPremium = role == 'premium';
+
+                      return Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          child: const Center(
-                            child: Text('👤', style: TextStyle(fontSize: 40)),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: AppSpacing.md),
-                        
-                        const Text(
-                          'Ethan Carter',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 4),
-                        
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Free Member',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: AppSpacing.lg),
-                        
-                        // Stats Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem(
-                              '${provider.currentStreak}',
-                              'Day Streak',
-                              Colors.white,
-                            ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                            _buildStatItem(
-                              '42',
-                              'Posts',
-                              Colors.white,
-                            ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                            _buildStatItem(
-                              '${provider.badges.length}',
-                              'Badges',
-                              Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          children: [
+                            // Profile Picture
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                              child: const Center(
+                                child: Text('👤', style: TextStyle(fontSize: 40)),
+                              ),
+                            ),
+
+                            const SizedBox(height: AppSpacing.md),
+
+                            Text(
+                              displayName,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isPremium
+                                    ? Colors.amberAccent.withOpacity(0.3)
+                                    : Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isPremium ? 'Premium Member' : 'Free Member',
+                                style: TextStyle(
+                                  color: isPremium
+                                      ? Colors.yellow.shade100
+                                      : Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: AppSpacing.lg),
+
+                            // Stats Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildStatItem(
+                                  '${provider.currentStreak}',
+                                  'Day Streak',
+                                  Colors.white,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildStatItem(
+                                  '42',
+                                  'Posts',
+                                  Colors.white,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                _buildStatItem(
+                                  '${provider.badges.length}',
+                                  'Badges',
+                                  Colors.white,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  
+
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user?.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox.shrink();
+
+                      final role = snapshot.data!.get('role') ?? 'free';
+                      final isPremium = role == 'premium';
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(isPremium
+                                    ? 'Cancel Premium?'
+                                    : 'Upgrade to Premium?'),
+                                content: Text(
+                                  isPremium
+                                      ? 'Are you sure you want to cancel your premium membership?'
+                                      : 'Unlock all premium features for your account?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('No'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child:
+                                        Text(isPremium ? 'Cancel' : 'Upgrade'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmed == true) {
+                              await _toggleMembership(context, !isPremium);
+                            }
+                          },
+                          icon: Icon(isPremium ? Icons.cancel : Icons.star,
+                              color: Colors.white),
+                          label: Text(
+                            isPremium ? 'Cancel Premium' : 'Upgrade to Premium',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isPremium
+                                ? Colors.redAccent
+                                : Colors.amber[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Health Overview Section
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -154,7 +293,6 @@ class ProfileScreen extends StatelessWidget {
                           style: AppTextStyles.heading3,
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
                         _buildHealthProgress(
                           'Steps',
                           provider.healthData.steps,
@@ -163,7 +301,6 @@ class ProfileScreen extends StatelessWidget {
                           const Color(0xFF6366F1),
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
                         _buildHealthProgress(
                           'Sleep',
                           (provider.healthData.sleep * 100).toInt(),
@@ -172,7 +309,6 @@ class ProfileScreen extends StatelessWidget {
                           const Color(0xFF8B5CF6),
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
                         _buildHealthProgress(
                           'Calories',
                           provider.healthData.calories,
@@ -183,9 +319,9 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Achievement Badges
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -201,11 +337,11 @@ class ProfileScreen extends StatelessWidget {
                           style: AppTextStyles.heading3,
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: AppSpacing.md,
                             mainAxisSpacing: AppSpacing.md,
@@ -260,9 +396,9 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Settings Section
                   const Align(
                     alignment: Alignment.centerLeft,
@@ -272,7 +408,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   _buildSettingItem(
                     Icons.person_outline,
                     'Edit Profile',
@@ -307,9 +443,9 @@ class ProfileScreen extends StatelessWidget {
                     'About',
                     () {},
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   // Logout Button
                   SizedBox(
                     width: double.infinity,
@@ -317,7 +453,7 @@ class ProfileScreen extends StatelessWidget {
                       onPressed: () => _showLogoutDialog(context),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.error),
+                        side: const BorderSide(color: AppColors.error),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -326,15 +462,15 @@ class ProfileScreen extends StatelessWidget {
                       child: const Text('Logout'),
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.md),
-                  
+
                   // App Version
-                  Text(
+                  const Text(
                     'Version 1.0.0',
                     style: AppTextStyles.caption,
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.lg),
                 ],
               );
@@ -376,7 +512,7 @@ class ProfileScreen extends StatelessWidget {
     Color color,
   ) {
     final progress = (current / goal).clamp(0.0, 1.0);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -445,7 +581,8 @@ class ProfileScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: AppColors.textSecondary),
         title: Text(label, style: AppTextStyles.body),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        trailing:
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
         onTap: onTap,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -454,7 +591,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // แก้ไข method _showLogoutDialog ให้ไปหน้า Login
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -462,11 +598,11 @@ class ProfileScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.logout, color: AppColors.error),
-            const SizedBox(width: 8),
-            const Text('Logout'),
+            SizedBox(width: 8),
+            Text('Logout'),
           ],
         ),
         content: const Text(
@@ -474,10 +610,9 @@ class ProfileScreen extends StatelessWidget {
           style: TextStyle(fontSize: 14),
         ),
         actions: [
-          // ปุ่ม Cancel
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
+            child: const Text(
               'Cancel',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -485,21 +620,16 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          
-          // ปุ่ม Logout
           ElevatedButton(
             onPressed: () {
-              // ปิด dialog
               Navigator.pop(dialogContext);
-              
-              // ไปหน้า Login และลบ history ทั้งหมด
+
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false, // ลบทุกหน้า ไม่ให้กด back กลับได้
+                (route) => false,
               );
-              
-              // แสดง SnackBar (optional)
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Logged out successfully 👋'),

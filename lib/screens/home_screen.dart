@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/health_data_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/health_card.dart';
@@ -10,6 +12,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -31,9 +35,26 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               
-              // Greeting
-              Consumer<HealthDataProvider>(
-                builder: (context, provider, _) {
+              // Greeting with name from database
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user?.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  String displayName = 'User';
+                  
+                  if (snapshot.hasData && snapshot.data != null) {
+                    final data = snapshot.data!.data() as Map<String, dynamic>?;
+                    if (data != null) {
+                      final firstName = data['firstname'] ?? '';
+                      final lastName = data['lastname'] ?? '';
+                      if (firstName.isNotEmpty) {
+                        displayName = firstName;
+                      }
+                    }
+                  }
+
                   final hour = DateTime.now().hour;
                   String greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
                   
@@ -41,11 +62,11 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$greeting, Ethan! 👋',
+                        '$greeting, $displayName! 👋',
                         style: AppTextStyles.heading2,
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      Text(
+                      const Text(
                         'You\'re doing great today!',
                         style: AppTextStyles.bodySmall,
                       ),
@@ -67,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [AppColors.primary, AppColors.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -171,10 +192,10 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               
               // Quick Actions
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Quick Actions", style: AppTextStyles.heading2),
+                  Text("Quick Actions", style: AppTextStyles.heading2),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
