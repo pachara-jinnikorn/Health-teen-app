@@ -15,6 +15,28 @@ class ConversationScreen extends StatefulWidget {
 
 class _ConversationScreenState extends State<ConversationScreen> {
   final _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +56,31 @@ class _ConversationScreenState extends State<ConversationScreen> {
       body: Column(
         children: [
           Expanded(
-            child: Consumer<ChatProvider>(
-              builder: (context, provider, _) {
-                final messages = provider.getMessages(widget.conversation.id);
+            // ✅ Use StreamBuilder to get messages in real-time
+            child: StreamBuilder(
+              stream: context.read<ChatProvider>().getMessagesStream(widget.conversation.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text('No messages yet. Start the conversation!'),
+                  );
+                }
+
+                final messages = snapshot.data!;
+                
+                // Scroll to bottom when new messages arrive
+                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
                 return ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  itemCount: messages.length + (provider.isAITyping ? 1 : 0),
+                  itemCount: messages.length + (context.watch<ChatProvider>().isAITyping ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == messages.length && provider.isAITyping) {
+                    if (index == messages.length && context.watch<ChatProvider>().isAITyping) {
                       return _buildTypingIndicator();
                     }
                     final message = messages[index];
@@ -110,6 +149,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
                             message,
                           );
                         }
+                        
+                        // Scroll to bottom after sending
+                        _scrollToBottom();
                       }
                     },
                   ),
@@ -187,7 +229,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           child: Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),

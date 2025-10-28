@@ -41,7 +41,7 @@ class PostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(post.author, style: AppTextStyles.heading3),
-                    Text(post.time, style: AppTextStyles.caption),
+                    Text(post.timeAgo, style: AppTextStyles.caption), // ✅ Use timeAgo
                   ],
                 ),
               ),
@@ -69,11 +69,11 @@ class PostCard extends StatelessWidget {
               ),
               Text('${post.likes}', style: AppTextStyles.bodySmall),
               const SizedBox(width: AppSpacing.md),
-              const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
+              Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Text('${post.comments}', style: AppTextStyles.bodySmall),
               const SizedBox(width: AppSpacing.md),
-              const Icon(Icons.share_outlined, color: AppColors.textSecondary),
+              Icon(Icons.share_outlined, color: AppColors.textSecondary),
             ],
           ),
         ],

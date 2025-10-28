@@ -1,97 +1,130 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post.dart';
 
 class CommunityProvider extends ChangeNotifier {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
   List<Post> _posts = [];
+  bool _isLoading = false;
   
   List<Post> get posts => _posts;
+  bool get isLoading => _isLoading;
 
   CommunityProvider() {
     _loadPosts();
   }
 
-  Future<void> _loadPosts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? savedPosts = prefs.getString('posts');
+  /// ✅ Load posts from Firestore in real-time
+  void _loadPosts() {
+    final currentUserId = _auth.currentUser?.uid ?? '';
     
-    if (savedPosts != null) {
-      try {
-        final List<dynamic> decoded = jsonDecode(savedPosts);
-        _posts = decoded.map((p) => Post.fromJson(p)).toList();
-        notifyListeners();
-      } catch (e) {
-        debugPrint('Error loading posts: $e');
-        _initializeDefaultPosts();
-      }
-    } else {
-      _initializeDefaultPosts();
+    _firestore
+        .collection('posts')
+        .orderBy('timestamp', descending: true)
+        .limit(50)
+        .snapshots()
+        .listen((snapshot) {
+      _posts = snapshot.docs
+          .map((doc) => Post.fromJson(doc.data(), currentUserId))
+          .toList();
+      notifyListeners();
+    });
+  }
+
+  /// ✅ Add a new post to Firestore
+  Future<void> addPost(String content) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      // Get user data from Firestore
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final userData = userDoc.data();
+      final firstName = userData?['firstname'] ?? 'User';
+      final lastName = userData?['lastname'] ?? '';
+      final displayName = lastName.isNotEmpty ? '$firstName $lastName' : firstName;
+
+      final postId = _firestore.collection('posts').doc().id;
+      
+      final newPost = Post(
+        id: postId,
+        author: displayName,
+        authorId: user.uid,
+        avatar: '👤',
+        content: content,
+        timestamp: DateTime.now(),
+        likes: 0,
+        comments: 0,
+        likedBy: [],
+      );
+
+      await _firestore.collection('posts').doc(postId).set(newPost.toJson());
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error adding post: $e');
+      rethrow;
     }
   }
 
-  void _initializeDefaultPosts() {
-    _posts = [
-      Post(
-        id: '1',
-        author: 'Liam',
-        avatar: '👤',
-        content: 'Just finished a great workout! Feeling energized and ready to tackle the day. #fitness #healthylifestyle',
-        time: '2h',
-        likes: 23,
-        comments: 5,
-      ),
-      Post(
-        id: '2',
-        author: 'Sophia',
-        avatar: '👤',
-        content: 'Made a delicious and nutritious smoothie this morning. Packed with fruits and veggies! #healthyfood #smoothierecipe',
-        time: '4h',
-        likes: 32,
-        comments: 8,
-      ),
-      Post(
-        id: '3',
-        author: 'Nathan',
-        avatar: '👤',
-        content: 'Took some time for mindfulness and meditation today. Feeling calm and focused. #mentalhealth #mindfulness',
-        time: '5h',
-        likes: 15,
-        comments: 2,
-      ),
-    ];
-    _savePosts();
-    notifyListeners();
+  /// ✅ Toggle like on a post
+  Future<void> toggleLike(String postId) async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      final postRef = _firestore.collection('posts').doc(postId);
+      final postDoc = await postRef.get();
+      
+      if (!postDoc.exists) return;
+
+      final data = postDoc.data()!;
+      final likedBy = List<String>.from(data['likedBy'] ?? []);
+      final isLiked = likedBy.contains(userId);
+
+      if (isLiked) {
+        // Unlike
+        likedBy.remove(userId);
+        await postRef.update({
+          'likedBy': likedBy,
+          'likes': FieldValue.increment(-1),
+        });
+      } else {
+        // Like
+        likedBy.add(userId);
+        await postRef.update({
+          'likedBy': likedBy,
+          'likes': FieldValue.increment(1),
+        });
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error toggling like: $e');
+    }
   }
 
-  Future<void> _savePosts() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'posts',
-      jsonEncode(_posts.map((p) => p.toJson()).toList()),
-    );
-  }
+  /// ✅ Delete a post (only if user is the author)
+  Future<void> deletePost(String postId) async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
 
-  void toggleLike(String postId) {
-    final post = _posts.firstWhere((p) => p.id == postId);
-    post.isLiked = !post.isLiked;
-    post.likes += post.isLiked ? 1 : -1;
-    notifyListeners();
-    _savePosts();
-  }
+      final postRef = _firestore.collection('posts').doc(postId);
+      final postDoc = await postRef.get();
+      
+      if (!postDoc.exists) return;
 
-  void addPost(String content) {
-    final newPost = Post(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      author: 'You',
-      avatar: '👤',
-      content: content,
-      time: 'Just now',
-      likes: 0,
-      comments: 0,
-    );
-    _posts.insert(0, newPost);
-    notifyListeners();
-    _savePosts();
+      final authorId = postDoc.data()?['authorId'];
+      if (authorId == userId) {
+        await postRef.delete();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error deleting post: $e');
+    }
   }
 }
