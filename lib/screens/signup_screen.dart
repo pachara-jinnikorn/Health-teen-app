@@ -55,23 +55,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
 
         if (user != null && mounted) {
+          // ✅ IMPORTANT: Sign out the user after registration
+          // Firebase auto-logs them in, but we want them to login manually
+          await _authService.logout();
+          
+          // ✅ Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Account created successfully 🎉'),
+              content: Text('Account created successfully! Please login 🎉'),
               backgroundColor: Color(0xFF14B8A6),
+              duration: Duration(seconds: 2),
             ),
           );
-          Navigator.pop(context);
+          
+          // ✅ Wait a moment for user to see the message, then navigate back
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          if (mounted) {
+            // ✅ Navigate back to login page
+            Navigator.pop(context);
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign Up failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sign Up failed: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -87,7 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
