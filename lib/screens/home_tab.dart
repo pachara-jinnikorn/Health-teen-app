@@ -16,80 +16,83 @@ class HomeTab extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return SafeArea(
-      child: SingleChildScrollView(
-        // กันชน bottom nav ให้ไม่ทับปุ่ม View Dashboard
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.md, AppSpacing.md,
-          AppSpacing.md + kBottomNavigationBarHeight + 16,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ===== Header =====
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Health Teen', style: AppTextStyles.heading1),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () {},
-                ),
-              ],
+      child: Consumer<HealthDataProvider>(
+        builder: (context, provider, _) {
+          final data = provider.healthData;
+          final steps = data.steps; // ✅ steps จาก Firestore หรือคำนวณ
+          final sleep = data.sleep;
+          final calories = data.calories;
+
+          // goal progress
+          final stepsProgress = (steps / 10000).clamp(0.0, 1.0);
+          final sleepProgress = (sleep / 8).clamp(0.0, 1.0);
+          final caloriesProgress = (calories / 2000).clamp(0.0, 1.0);
+          final overallProgress =
+              (stepsProgress + sleepProgress + caloriesProgress) / 3;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md + kBottomNavigationBarHeight + 16,
             ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // ===== Greeting with name from Firestore =====
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user?.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                String displayName = 'User';
-                if (snapshot.hasData && snapshot.data != null) {
-                  final data = snapshot.data!.data() as Map<String, dynamic>?;
-                  if (data != null) {
-                    final firstName = data['firstname'] ?? '';
-                    if (firstName.isNotEmpty) displayName = firstName;
-                  }
-                }
-                final hour = DateTime.now().hour;
-                final greeting = hour < 12
-                    ? 'Good Morning'
-                    : hour < 17
-                        ? 'Good Afternoon'
-                        : 'Good Evening';
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ===== Header =====
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('$greeting, $displayName! 👋',
-                        style: AppTextStyles.heading2),
-                    const SizedBox(height: AppSpacing.xs),
-                    const Text(
-                      "You're doing great today!",
-                      style: AppTextStyles.bodySmall,
+                    const Text('Health Teen', style: AppTextStyles.heading1),
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      onPressed: () {},
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
 
-            const SizedBox(height: AppSpacing.lg),
+                // ===== Greeting =====
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    String displayName = 'User';
+                    if (snapshot.hasData && snapshot.data != null) {
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>?;
+                      if (data != null && data['firstname'] != null) {
+                        displayName = data['firstname'];
+                      }
+                    }
+                    final hour = DateTime.now().hour;
+                    final greeting = hour < 12
+                        ? 'Good Morning'
+                        : hour < 17
+                            ? 'Good Afternoon'
+                            : 'Good Evening';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$greeting, $displayName! 👋',
+                            style: AppTextStyles.heading2),
+                        const SizedBox(height: AppSpacing.xs),
+                        const Text(
+                          "You're doing great today!",
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    );
+                  },
+                ),
 
-            // ===== Daily Goal Progress Card =====
-            Consumer<HealthDataProvider>(
-              builder: (context, provider, _) {
-                final stepsProgress =
-                    (provider.healthData.steps / 10000).clamp(0.0, 1.0);
-                final sleepProgress =
-                    (provider.healthData.sleep / 8).clamp(0.0, 1.0);
-                final caloriesProgress =
-                    (provider.healthData.calories / 2000).clamp(0.0, 1.0);
-                final overallProgress =
-                    (stepsProgress + sleepProgress + caloriesProgress) / 3;
+                const SizedBox(height: AppSpacing.lg),
 
-                return Container(
+                // ===== Daily Goal Progress Card =====
+                Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -144,7 +147,8 @@ class HomeTab extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                const Text('🔥', style: TextStyle(fontSize: 16)),
+                                const Text('🔥',
+                                    style: TextStyle(fontSize: 16)),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${provider.currentStreak} Days',
@@ -167,21 +171,21 @@ class HomeTab extends StatelessWidget {
                           _buildCircularProgress(
                             'Steps',
                             stepsProgress,
-                            '${provider.healthData.steps}',
+                            '$steps',
                             '10k',
                             Colors.white,
                           ),
                           _buildCircularProgress(
                             'Sleep',
                             sleepProgress,
-                            '${provider.healthData.sleep}h',
+                            '${_fmtDouble(sleep)}h',
                             '8h',
                             Colors.white,
                           ),
                           _buildCircularProgress(
                             'Calories',
                             caloriesProgress,
-                            '${provider.healthData.calories}',
+                            '$calories',
                             '2k',
                             Colors.white,
                           ),
@@ -189,135 +193,117 @@ class HomeTab extends StatelessWidget {
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // ===== Quick Actions =====
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Quick Actions", style: AppTextStyles.heading2),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.directions_walk,
-                    label: 'Log Steps',
-                    color: const Color(0xFF6366F1),
-                    onTap: () => _showLogDialog(context, 'steps'),
-                  ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.bedtime,
-                    label: 'Log Sleep',
-                    color: const Color(0xFF8B5CF6),
-                    onTap: () => _showLogDialog(context, 'sleep'),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.restaurant,
-                    label: 'Log Meal',
-                    color: const Color(0xFFEC4899),
-                    onTap: () => _showLogDialog(context, 'calories'),
-                  ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.lg),
 
-            // ===== Today's Health =====
-            const Text("Today's Health", style: AppTextStyles.heading2),
-            const SizedBox(height: AppSpacing.md),
+                // ===== Quick Actions =====
+                const Text("Quick Actions", style: AppTextStyles.heading2),
+                const SizedBox(height: AppSpacing.md),
 
-            Consumer<HealthDataProvider>(
-              builder: (context, provider, _) {
-                return Column(
+                Row(
                   children: [
-                    HealthCard(
-                      icon: Icons.directions_walk,
-                      label: 'Steps',
-                      value: provider.healthData.steps.toString(),
-                      unit: 'Daily steps',
-                      onView: () => Navigator.push(
+                    Expanded(
+                      child: _buildQuickAction(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const DashboardScreen()),
+                        icon: Icons.directions_walk,
+                        label: 'Log Steps',
+                        color: const Color(0xFF6366F1),
+                        onTap: () => _showLogDialog(context, 'steps'),
                       ),
-                      onAdd: () => _showLogDialog(context, 'steps'),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    HealthCard(
-                      icon: Icons.bedtime,
-                      label: 'Sleep',
-                      value: '${provider.healthData.sleep}h',
-                      unit: 'Sleep duration',
-                      onView: () => Navigator.push(
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _buildQuickAction(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const DashboardScreen()),
+                        icon: Icons.bedtime,
+                        label: 'Log Sleep',
+                        color: const Color(0xFF8B5CF6),
+                        onTap: () => _showLogDialog(context, 'sleep'),
                       ),
-                      onAdd: () => _showLogDialog(context, 'sleep'),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    HealthCard(
-                      icon: Icons.local_fire_department,
-                      label: 'Calories',
-                      value: provider.healthData.calories.toString(),
-                      unit: 'Calories burned',
-                      onView: () => Navigator.push(
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _buildQuickAction(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const DashboardScreen()),
+                        icon: Icons.restaurant,
+                        label: 'Log Meal',
+                        color: const Color(0xFFEC4899),
+                        onTap: () => _showLogDialog(context, 'calories'),
                       ),
-                      onAdd: () => _showLogDialog(context, 'calories'),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
 
-            const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.lg),
 
-            // ===== View Dashboard Button =====
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
+                // ===== Today's Health =====
+                const Text("Today's Health", style: AppTextStyles.heading2),
+                const SizedBox(height: AppSpacing.md),
+
+                HealthCard(
+                  icon: Icons.directions_walk,
+                  label: 'Steps',
+                  value: '$steps',
+                  unit: 'Daily steps',
+                  onView: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (_) => const DashboardScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  ),
+                  onAdd: () => _showLogDialog(context, 'steps'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                HealthCard(
+                  icon: Icons.bedtime,
+                  label: 'Sleep',
+                  value: '${_fmtDouble(sleep)}h',
+                  unit: 'Sleep duration',
+                  onView: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  ),
+                  onAdd: () => _showLogDialog(context, 'sleep'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                HealthCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Calories',
+                  value: '$calories',
+                  unit: 'Calories burned',
+                  onView: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  ),
+                  onAdd: () => _showLogDialog(context, 'calories'),
+                ),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // ===== View Dashboard Button =====
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const DashboardScreen()),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('View Dashboard',
+                        style: TextStyle(fontSize: 16)),
                   ),
                 ),
-                child: const Text('View Dashboard',
-                    style: TextStyle(fontSize: 16)),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -348,21 +334,14 @@ class HomeTab extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  '/$goal',
-                  style: TextStyle(
-                    color: color.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
-                ),
+                Text(value,
+                    style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14)),
+                Text('/$goal',
+                    style:
+                        TextStyle(color: color.withOpacity(0.7), fontSize: 10)),
               ],
             ),
           ],
@@ -393,15 +372,9 @@ class HomeTab extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(label,
+                style: TextStyle(
+                    color: color, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -410,7 +383,6 @@ class HomeTab extends StatelessWidget {
 
   void _showLogDialog(BuildContext context, String type) {
     final controller = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -445,7 +417,6 @@ class HomeTab extends StatelessWidget {
                   provider.updateCalories(int.parse(value));
                 }
                 Navigator.pop(context);
-
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('$type logged successfully! 🎉'),
@@ -461,4 +432,7 @@ class HomeTab extends StatelessWidget {
       ),
     );
   }
+
+  static String _fmtDouble(double v) =>
+      v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 1);
 }
