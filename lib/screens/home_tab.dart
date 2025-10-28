@@ -405,25 +405,40 @@ class HomeTab extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              final value = controller.text;
-              if (value.isNotEmpty) {
-                final provider = context.read<HealthDataProvider>();
+            onPressed: () async {
+              final raw = controller.text.trim();
+              if (raw.isEmpty) return;
+
+              try {
                 if (type == 'steps') {
-                  provider.updateSteps(int.parse(value));
+                  final v = int.parse(raw);
+                  await _upsertTodayLog(context, steps: v);
                 } else if (type == 'sleep') {
-                  provider.updateSleep(double.parse(value));
+                  final v = double.parse(raw);
+                  await _upsertTodayLog(context, sleepHours: v);
                 } else if (type == 'calories') {
-                  provider.updateCalories(int.parse(value));
+                  final v = int.parse(raw);
+                  await _upsertTodayLog(context, calories: v);
                 }
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$type logged successfully! 🎉'),
-                    backgroundColor: AppColors.success,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$type logged to database! ✅'),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to save: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Save'),
@@ -431,6 +446,63 @@ class HomeTab extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _upsertTodayLog(
+    BuildContext context, {
+    int? steps,
+    double? sleepHours,
+    int? calories,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in first')),
+      );
+      return;
+    }
+
+    final logDate = DateTime.now().toIso8601String().split('T').first;
+    final logsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('healthLogs');
+
+    // หา log ของ "วันนี้"
+    final existing =
+        await logsRef.where('logDate', isEqualTo: logDate).limit(1).get();
+
+    // เตรียมข้อมูลที่จะอัปเดตเฉพาะฟิลด์ที่ผู้ใช้กรอก
+    final Map<String, dynamic> updates = {
+      if (steps != null) 'steps': steps,
+      if (sleepHours != null)
+        'sleepHours': sleepHours.round(), // เก็บเป็น int ให้ตรง schema
+      if (calories != null) 'calories': calories,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (existing.docs.isNotEmpty) {
+      // อัปเดตเอกสารเดิมของวันนี้
+      await existing.docs.first.reference.update(updates);
+    } else {
+      // สร้างเอกสารใหม่ของวันนี้ (เติมค่า default ให้ครบ เพื่อหลีกเลี่ยง rule/การอ่านภายหลัง)
+      await logsRef.add({
+        'calories': calories ?? 0,
+        'exerciseMinutes': 0, // คงไว้ 0 ถ้าไม่ได้เก็บ
+        'sleepHours': (sleepHours ?? 0).round(),
+        'steps': steps ?? 0,
+        'logDate': logDate,
+        'createdAt': FieldValue.serverTimestamp(),
+        'source': 'manual',
+        ...updates,
+      });
+    }
+
+    // อัปเดต Provider ให้ UI เปลี่ยนทันที (ไม่ต้องรออ่านรอบใหม่)
+    final provider = context.read<HealthDataProvider>();
+    if (steps != null) provider.updateSteps(steps);
+    if (sleepHours != null) provider.updateSleep(sleepHours);
+    if (calories != null) provider.updateCalories(calories);
   }
 
   static String _fmtDouble(double v) =>
