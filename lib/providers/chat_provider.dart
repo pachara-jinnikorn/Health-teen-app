@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/message.dart';
 import '../services/ai_service.dart';
 import '../models/health_data.dart';
+import 'dart:async';
 
 class ChatProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,6 +13,8 @@ class ChatProvider extends ChangeNotifier {
   
   List<Conversation> _conversations = [];
   bool _isAITyping = false;
+  StreamSubscription? _conversationsSubscription; // ✅ Track subscription
+  String? _currentUserId; // ✅ Track current user
 
   List<Conversation> get conversations => _conversations;
   bool get isAITyping => _isAITyping;
@@ -20,8 +23,42 @@ class ChatProvider extends ChangeNotifier {
     _initializeChat();
   }
 
-  /// ✅ Initialize chat by creating AI conversation first
+  /// ✅ Initialize chat and listen to auth changes
   Future<void> _initializeChat() async {
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((user) {
+      if (user == null) {
+        // User logged out - clear everything
+        _clearData();
+      } else if (_currentUserId != user.uid) {
+        // Different user logged in - reload data
+        _currentUserId = user.uid;
+        _reloadData();
+      }
+    });
+
+    // Initial load if user is already logged in
+    final user = _auth.currentUser;
+    if (user != null) {
+      _currentUserId = user.uid;
+      await ensureAIConversationExists();
+      _loadConversations();
+    }
+  }
+
+  /// ✅ Clear all data when user logs out
+  void _clearData() {
+    _conversationsSubscription?.cancel();
+    _conversationsSubscription = null;
+    _conversations.clear();
+    _isAITyping = false;
+    _currentUserId = null;
+    notifyListeners();
+  }
+
+  /// ✅ Reload data for new user
+  Future<void> _reloadData() async {
+    _clearData();
     await ensureAIConversationExists();
     _loadConversations();
   }
@@ -36,7 +73,10 @@ class ChatProvider extends ChangeNotifier {
 
     debugPrint('✅ Loading conversations for user: $userId');
 
-    _firestore
+    // Cancel previous subscription if exists
+    _conversationsSubscription?.cancel();
+
+    _conversationsSubscription = _firestore
         .collection('conversations')
         .where('participants', arrayContains: userId)
         .snapshots()
@@ -317,5 +357,11 @@ class ChatProvider extends ChangeNotifier {
       debugPrint('❌ Error creating conversation: $e');
       return null;
     }
+  }
+
+  @override
+  void dispose() {
+    _conversationsSubscription?.cancel(); // ✅ Clean up subscription
+    super.dispose();
   }
 }

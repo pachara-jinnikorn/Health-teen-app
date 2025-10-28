@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post.dart';
+import 'dart:async';
 
 class CommunityProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -9,19 +10,55 @@ class CommunityProvider extends ChangeNotifier {
   
   List<Post> _posts = [];
   bool _isLoading = false;
+  StreamSubscription? _postsSubscription; // ✅ Track subscription
+  String? _currentUserId; // ✅ Track current user
   
   List<Post> get posts => _posts;
   bool get isLoading => _isLoading;
 
   CommunityProvider() {
-    _loadPosts();
+    _initializeCommunity();
+  }
+
+  /// ✅ Initialize community and listen to auth changes
+  void _initializeCommunity() {
+    _auth.authStateChanges().listen((user) {
+      if (user == null) {
+        // User logged out - clear everything
+        _clearData();
+      } else if (_currentUserId != user.uid) {
+        // Different user logged in - reload data
+        _currentUserId = user.uid;
+        _loadPosts();
+      }
+    });
+
+    // Initial load if user is already logged in
+    final user = _auth.currentUser;
+    if (user != null) {
+      _currentUserId = user.uid;
+      _loadPosts();
+    }
+  }
+
+  /// ✅ Clear all data when user logs out
+  void _clearData() {
+    _postsSubscription?.cancel();
+    _postsSubscription = null;
+    _posts.clear();
+    _isLoading = false;
+    _currentUserId = null;
+    notifyListeners();
   }
 
   /// ✅ Load posts from Firestore in real-time
   void _loadPosts() {
     final currentUserId = _auth.currentUser?.uid ?? '';
     
-    _firestore
+    // Cancel previous subscription if exists
+    _postsSubscription?.cancel();
+    
+    _postsSubscription = _firestore
         .collection('posts')
         .orderBy('timestamp', descending: true)
         .limit(50)
@@ -126,5 +163,11 @@ class CommunityProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error deleting post: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _postsSubscription?.cancel(); // ✅ Clean up subscription
+    super.dispose();
   }
 }
