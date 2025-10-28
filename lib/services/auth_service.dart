@@ -1,28 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  Future<void> _createHealthLog(String uid, {required String reason}) async {
-    final now = DateTime.now();
-    final logDate = now.toIso8601String().split('T').first;
-    final r = Random();
-    final calories = 1500 + r.nextInt(1200); // 1500–2700
-    final exerciseMinutes = 20 + r.nextInt(81); // 20–100
-    final sleepHours = 5 + r.nextInt(5); // 5–9
-
-    await _firestore.collection('users').doc(uid).collection('healthLogs').add({
-      'calories': calories,
-      'exerciseMinutes': exerciseMinutes,
-      'sleepHours': sleepHours,
-      'logDate': logDate,
-      'createdAt': FieldValue.serverTimestamp(),
-      'source': reason, // 'register' | 'login'
-    });
-  }
 
   /// ✅ Register (Sign Up)
   Future<User?> register(
@@ -46,7 +27,6 @@ class AuthService {
       });
 
       await result.user!.updateDisplayName("$firstName $lastName");
-      await _createHealthLog(result.user!.uid, reason: 'register');
 
       return result.user;
     } on FirebaseAuthException catch (e) {
@@ -65,7 +45,6 @@ class AuthService {
         email: email,
         password: password,
       );
-      await _createHealthLog(result.user!.uid, reason: 'login');
       return result.user;
     } on FirebaseAuthException catch (e) {
       print('🔥 FirebaseAuth error: ${e.code} - ${e.message}');

@@ -119,7 +119,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Be the first to share something!',
                             style: AppTextStyles.bodySmall,
                           ),
