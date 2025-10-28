@@ -8,7 +8,7 @@ import 'providers/health_data_provider.dart';
 import 'providers/community_provider.dart'; // ✅ Add this
 import 'providers/chat_provider.dart';      // ✅ Add this
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
           if (!auth.isAuthenticated) {
             return const LoginScreen();
           } else {
-            return const HomeScreen();
+            return const MainScreen();
           }
         },
       ),

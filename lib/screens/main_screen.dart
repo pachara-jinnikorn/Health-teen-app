@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import '../utils/constants.dart';
+
+import 'home_tab.dart';
 import 'community_screen.dart';
 import 'challenges_screen.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
-import '../utils/constants.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,18 +17,22 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const CommunityScreen(),
-    const ChallengesScreen(),
-    const ChatScreen(),
-    const ProfileScreen(),
+  final List<Widget> _screens = const [
+    HomeTab(),          // ใช้ HomeTab ที่ไม่มี Scaffold
+    CommunityScreen(),
+    ChallengesScreen(),
+    ChatScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      // ใช้ IndexedStack เพื่อคง state แต่ละแท็บ
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -58,9 +63,10 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(
+      IconData outlinedIcon, IconData filledIcon, String label, int index) {
     final isSelected = _currentIndex == index;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
