@@ -35,10 +35,20 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.2
 
+# ✅ SINGLE dev_dependencies section (merged both sections)
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  
+  # Testing packages
+  integration_test:
+    sdk: flutter
+  mockito: ^5.4.4
+  build_runner: ^2.4.13
+  fake_cloud_firestore: ^3.0.3
+  firebase_auth_mocks: ^0.14.1
+  test: ^1.25.8
 
 flutter:
   uses-material-design: true
