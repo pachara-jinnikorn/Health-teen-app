@@ -8,24 +8,40 @@ class AuthService {
 
   Future<void> _createHealthLog(String uid, {required String reason}) async {
     final now = DateTime.now();
-    final logDate = now.toIso8601String().split('T').first;
+    final logDate = now.toIso8601String().split('T').first; // เช่น "2025-10-28"
     final r = Random();
-    final calories = 1500 + r.nextInt(1200); // 1500–2700
-    final exerciseMinutes = 20 + r.nextInt(81); // 20–100
-    final sleepHours = 5 + r.nextInt(5); // 5–9
-    // ✅ ประมาณจำนวนก้าวจาก exerciseMinutes
+
+    final calories = 1500 + r.nextInt(1200); // 1500–2700 kcal
+    final exerciseMinutes = 20 + r.nextInt(81); // 20–100 นาที
+    final sleepHours = 5 + r.nextInt(5); // 5–9 ชม.
     final steps = (exerciseMinutes * (100 + r.nextInt(51)))
         .toInt(); // 100–150 ก้าวต่อนาที
 
-    await _firestore.collection('users').doc(uid).collection('healthLogs').add({
+    final logsRef =
+        _firestore.collection('users').doc(uid).collection('healthLogs');
+
+    // 🔍 ตรวจว่ามี log ของวันนี้หรือยัง
+    final existing =
+        await logsRef.where('logDate', isEqualTo: logDate).limit(1).get();
+
+    if (existing.docs.isNotEmpty) {
+      // มีแล้ว → ไม่สร้างซ้ำ
+      print('⏩ Health log already exists for $logDate (skip create)');
+      return;
+    }
+
+    // 🆕 ยังไม่มี → สร้างใหม่
+    await logsRef.add({
       'calories': calories,
       'exerciseMinutes': exerciseMinutes,
       'sleepHours': sleepHours,
-      'steps': steps, // ✅ เพิ่มฟิลด์นี้
+      'steps': steps,
       'logDate': logDate,
       'createdAt': FieldValue.serverTimestamp(),
-      'source': reason, // 'register' | 'login'
+      'source': reason, // 'register' หรือ 'login'
     });
+
+    print('✅ Created new health log for $logDate');
   }
 
   /// ✅ Register (Sign Up)

@@ -5,6 +5,8 @@ import '../utils/constants.dart';
 import 'login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'payment_screen.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -87,14 +89,15 @@ class ProfileScreen extends StatelessWidget {
                     builder: (context, snapshot) {
                       String displayName = 'User';
                       String role = 'free';
-                      
+
                       if (snapshot.hasData && snapshot.data != null) {
-                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>?;
                         if (data != null) {
                           final firstName = data['firstname'] ?? '';
                           final lastName = data['lastname'] ?? '';
                           role = data['role'] ?? 'free';
-                          
+
                           if (firstName.isNotEmpty && lastName.isNotEmpty) {
                             displayName = '$firstName $lastName';
                           } else if (firstName.isNotEmpty) {
@@ -133,7 +136,8 @@ class ProfileScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(40),
                               ),
                               child: const Center(
-                                child: Text('👤', style: TextStyle(fontSize: 40)),
+                                child:
+                                    Text('👤', style: TextStyle(fontSize: 40)),
                               ),
                             ),
 
@@ -170,7 +174,83 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (isPremium)
+                              StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(user?.uid)
+                                    .collection('subscriptions')
+                                    .orderBy('createdAt', descending: true)
+                                    .limit(1)
+                                    .snapshots(),
+                                builder: (context, snap) {
+                                  if (!snap.hasData ||
+                                      snap.data!.docs.isEmpty) {
+                                    return const SizedBox(height: 8);
+                                  }
 
+                                  final sub = snap.data!.docs.first.data()
+                                      as Map<String, dynamic>;
+                                  final endStr =
+                                      (sub['endDate'] ?? '') as String;
+                                  final status =
+                                      (sub['status'] ?? 'active') as String;
+
+                                  String formatted = endStr;
+                                  try {
+                                    if (endStr.isNotEmpty) {
+                                      final dt =
+                                          DateTime.parse('${endStr}T00:00:00');
+                                      formatted =
+                                          DateFormat('d MMM y').format(dt);
+                                    }
+                                  } catch (_) {}
+
+                                  String daysLeftText = '';
+                                  try {
+                                    if (endStr.isNotEmpty) {
+                                      final dt =
+                                          DateTime.parse('${endStr}T00:00:00');
+                                      final daysLeft =
+                                          dt.difference(DateTime.now()).inDays;
+                                      if (daysLeft >= 0) {
+                                        daysLeftText =
+                                            '  •  $daysLeft day${daysLeft == 1 ? '' : 's'} left';
+                                      }
+                                    }
+                                  } catch (_) {}
+
+                                  final isActive = status == 'active';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          isActive
+                                              ? Icons.event_available
+                                              : Icons.event_busy,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          isActive
+                                              ? 'Premium until $formatted$daysLeftText'
+                                              : 'Premium cancelled (was until $formatted)',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             const SizedBox(height: AppSpacing.lg),
 
                             // Stats Row
@@ -225,16 +305,23 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 12.0),
                         child: ElevatedButton.icon(
                           onPressed: () async {
+                            if (!isPremium) {
+                              // ยังไม่เป็น premium → ไปหน้า Checkout/ชำระเงิน
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const PaymentScreen()),
+                              );
+                              return;
+                            }
+
+                            // เป็น premium แล้ว → ยืนยันยกเลิกก่อน
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                title: Text(isPremium
-                                    ? 'Cancel Premium?'
-                                    : 'Upgrade to Premium?'),
-                                content: Text(
-                                  isPremium
-                                      ? 'Are you sure you want to cancel your premium membership?'
-                                      : 'Unlock all premium features for your account?',
+                                title: const Text('Cancel Premium?'),
+                                content: const Text(
+                                  'Are you sure you want to cancel your premium membership?',
                                 ),
                                 actions: [
                                   TextButton(
@@ -243,15 +330,14 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.pop(ctx, true),
-                                    child:
-                                        Text(isPremium ? 'Cancel' : 'Upgrade'),
+                                    child: const Text('Cancel'),
                                   ),
                                 ],
                               ),
                             );
 
                             if (confirmed == true) {
-                              await _toggleMembership(context, !isPremium);
+                              await _toggleMembership(context, false);
                             }
                           },
                           icon: Icon(isPremium ? Icons.cancel : Icons.star,
