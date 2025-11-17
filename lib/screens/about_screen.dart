@@ -1,6 +1,8 @@
 // lib/screens/about_screen.dart
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import 'terms_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -188,21 +190,46 @@ class AboutScreen extends StatelessWidget {
                     _buildLegalLink(
                       'Terms of Service',
                       () {
-                        // Navigate to terms
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const TermsScreen()),
+                        );
                       },
                     ),
                     const Divider(),
                     _buildLegalLink(
                       'Privacy Policy',
                       () {
-                        // Navigate to privacy
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                        );
                       },
                     ),
                     const Divider(),
                     _buildLegalLink(
                       'Open Source Licenses',
                       () {
-                        showLicensePage(context: context);
+                        showLicensePage(
+                          context: context,
+                          applicationName: 'Health Teen',
+                          applicationVersion: '1.0.0',
+                          applicationIcon: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppColors.primary, AppColors.secondary],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.favorite,
+                              size: 40,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ],
