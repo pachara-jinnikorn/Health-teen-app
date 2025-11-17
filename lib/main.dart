@@ -5,8 +5,9 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/health_data_provider.dart';
-import 'providers/community_provider.dart'; // ✅ Add this
-import 'providers/chat_provider.dart';      // ✅ Add this
+import 'providers/community_provider.dart';
+import 'providers/chat_provider.dart';
+import 'providers/challenge_provider.dart'; 
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 
@@ -21,8 +22,9 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HealthDataProvider()),
-        ChangeNotifierProvider(create: (_) => CommunityProvider()), // ✅ Add this
-        ChangeNotifierProvider(create: (_) => ChatProvider()),      // ✅ Add this
+        ChangeNotifierProvider(create: (_) => CommunityProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => ChallengeProvider()), 
       ],
       child: const MyApp(),
     ),
