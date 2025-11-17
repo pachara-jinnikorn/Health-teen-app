@@ -1,3 +1,4 @@
+// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_data_provider.dart';
@@ -7,6 +8,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'payment_screen.dart';
 import 'package:intl/intl.dart';
+
+// Import new screens
+import 'edit_profile_screen.dart';
+import 'password_security_screen.dart';
+import 'privacy_settings_screen.dart';
+import 'help_support_screen.dart';
+import 'about_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -34,7 +42,7 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
 
-      // ✅ รีโหลดหน้าปัจจุบัน
+      // ✅ Reload current page
       (context as Element).reassemble();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,6 +298,7 @@ class ProfileScreen extends StatelessWidget {
                     },
                   ),
 
+                  // Premium/Cancel Button
                   StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('users')
@@ -306,7 +315,7 @@ class ProfileScreen extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             if (!isPremium) {
-                              // ยังไม่เป็น premium → ไปหน้า Checkout/ชำระเงิน
+                              // Not premium → Go to payment screen
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -315,7 +324,7 @@ class ProfileScreen extends StatelessWidget {
                               return;
                             }
 
-                            // เป็น premium แล้ว → ยืนยันยกเลิกก่อน
+                            // Already premium → Confirm cancellation
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
@@ -499,35 +508,55 @@ class ProfileScreen extends StatelessWidget {
                     Icons.person_outline,
                     'Edit Profile',
                     () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit Profile tapped')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen()),
                       );
                     },
                   ),
                   _buildSettingItem(
                     Icons.lock_outline,
                     'Password & Security',
-                    () {},
-                  ),
-                  _buildSettingItem(
-                    Icons.notifications_outlined,
-                    'Notifications',
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PasswordSecurityScreen()),
+                      );
+                    },
                   ),
                   _buildSettingItem(
                     Icons.privacy_tip_outlined,
                     'Privacy Settings',
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PrivacySettingsScreen()),
+                      );
+                    },
                   ),
                   _buildSettingItem(
                     Icons.help_outline,
                     'Help & Support',
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const HelpSupportScreen()),
+                      );
+                    },
                   ),
                   _buildSettingItem(
                     Icons.info_outline,
                     'About',
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: AppSpacing.md),
