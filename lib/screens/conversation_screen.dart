@@ -129,29 +129,32 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   IconButton(
                     icon: const Icon(Icons.send),
                     color: AppColors.primary,
-                    onPressed: () {
-                      if (_messageController.text.isNotEmpty) {
-                        final message = _messageController.text;
-                        _messageController.clear();
-                        
-                        if (widget.conversation.isAI == true) {
-                          // Send to AI chatbot with health data context
-                          final healthData = context.read<HealthDataProvider>().healthData;
-                          context.read<ChatProvider>().sendAIMessage(
-                            widget.conversation.id,
-                            message,
-                            healthData,
-                          );
-                        } else {
-                          // Regular message
-                          context.read<ChatProvider>().sendMessage(
-                            widget.conversation.id,
-                            message,
-                          );
-                        }
-                        
-                        // Scroll to bottom after sending
-                        _scrollToBottom();
+                    onPressed: () async {
+                      final text = _messageController.text.trim();
+                      if (text.isEmpty) return;
+
+                      _messageController.clear();
+
+                      // Check if Premium AI
+                      if (widget.conversation.isPremiumAI) {
+                        // Use Premium AI
+                        await context.read<ChatProvider>().sendPremiumAIMessage(
+                              widget.conversation.id,
+                              text,
+                            );
+                      } else if (widget.conversation.isAI) {
+                        // Use Dr. Wellness (existing AI)
+                        await context.read<ChatProvider>().sendAIMessage(
+                              widget.conversation.id,
+                              text,
+                              null, // or pass health data
+                            );
+                      } else {
+                        // Regular user chat
+                        await context.read<ChatProvider>().sendMessage(
+                              widget.conversation.id,
+                              text,
+                            );
                       }
                     },
                   ),

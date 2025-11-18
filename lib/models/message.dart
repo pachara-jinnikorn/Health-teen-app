@@ -48,7 +48,8 @@ class Conversation {
   String lastMessage;
   DateTime timestamp;
   bool isAI;
-  List<String> participants; // ✅ User IDs in the conversation
+  bool isPremiumAI; // ✅ ADDED
+  List<String> participants;
 
   Conversation({
     required this.id,
@@ -57,6 +58,7 @@ class Conversation {
     required this.lastMessage,
     required this.timestamp,
     this.isAI = false,
+    this.isPremiumAI = false, // ✅ ADDED
     this.participants = const [],
   });
 
@@ -68,6 +70,7 @@ class Conversation {
       'lastMessage': lastMessage,
       'timestamp': Timestamp.fromDate(timestamp),
       'isAI': isAI,
+      'isPremiumAI': isPremiumAI, // ✅ ADDED
       'participants': participants,
     };
   }
@@ -80,6 +83,7 @@ class Conversation {
       lastMessage: json['lastMessage'] ?? '',
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isAI: json['isAI'] ?? false,
+      isPremiumAI: json['isPremiumAI'] ?? false, // ✅ ADDED
       participants: List<String>.from(json['participants'] ?? []),
     );
   }

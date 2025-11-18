@@ -5,6 +5,7 @@ import '../models/message.dart';
 import '../services/ai_service.dart';
 import '../models/health_data.dart';
 import 'dart:async';
+import '../services/premium_ai_service.dart';
 
 class ChatProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -369,7 +370,6 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Create new conversation
-      // ⚠️ ลบบรรทัด final otherUserDoc = ... ออก เพราะดึงมาแล้วด้านบน
       final firstName = otherUserData?['firstname'] ?? 'User';
       final lastName = otherUserData?['lastname'] ?? '';
       final displayName =
@@ -391,6 +391,148 @@ class ChatProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Error creating conversation: $e');
       return null;
+    }
+  }
+
+  // ✅ Method 1: Create Premium AI conversation
+  Future<String?> getOrCreatePremiumAIConversation() async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return null;
+
+      final premiumAIConvId = 'premium_ai_$userId';
+      final premiumAIConvRef =
+          _firestore.collection('conversations').doc(premiumAIConvId);
+      final premiumAIConvDoc = await premiumAIConvRef.get();
+
+      if (!premiumAIConvDoc.exists) {
+        final now = DateTime.now();
+
+        await premiumAIConvRef.set({
+          'id': premiumAIConvId,
+          'name': 'Health Guru',
+          'avatar': '🤖',
+          'lastMessage': 'Hi! I\'m Health Guru ✨',
+          'timestamp': Timestamp.fromDate(now),
+          'isAI': true,
+          'isPremiumAI': true,
+          'participants': [userId],
+        });
+
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        final welcomeMessageId = now.millisecondsSinceEpoch.toString();
+        await _firestore
+            .collection('conversations')
+            .doc(premiumAIConvId)
+            .collection('messages')
+            .doc(welcomeMessageId)
+            .set({
+          'id': welcomeMessageId,
+          'senderId': 'premium_ai',
+          'senderName': 'Health Guru',
+          'content':
+              'Hello! I\'m Health Guru, your Premium AI Assistant! 🤖✨\n\nI can help with personalized health advice. What would you like to discuss?',
+          'timestamp': Timestamp.fromDate(now),
+        });
+      }
+
+      return premiumAIConvId;
+    } catch (e) {
+      debugPrint('❌ Error: $e');
+      return null;
+    }
+  }
+
+  // ✅ Method 2: Send message to Premium AI
+  Future<void> sendPremiumAIMessage(
+      String conversationId, String content) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final userData = userDoc.data();
+      final firstName = userData?['firstname'] ?? 'User';
+      final lastName = userData?['lastname'] ?? '';
+      final displayName =
+          lastName.isNotEmpty ? '$firstName $lastName' : firstName;
+
+      // Add user message
+      final userMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+      await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .doc(userMessageId)
+          .set({
+        'id': userMessageId,
+        'senderId': user.uid,
+        'senderName': displayName,
+        'content': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await _firestore.collection('conversations').doc(conversationId).update({
+        'lastMessage': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Show typing
+      _isAITyping = true;
+      notifyListeners();
+
+      // Get conversation history
+      final historySnapshot = await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(10)
+          .get();
+
+   final conversationHistory = historySnapshot.docs.map((doc) {
+  final data = doc.data();
+  final senderId = data['senderId'] ?? '';
+  final content = data['content'] ?? '';
+  return {
+    'role': (senderId == 'premium_ai') ? 'assistant' : 'user',
+    'content': content,
+  };
+}).toList().reversed.toList().cast<Map<String, String>>(); // ✅ ADD .cast<Map<String, String>>()
+
+      // Get AI response
+      final aiResponse = await PremiumAIService.sendMessage(
+        content,
+        conversationHistory: conversationHistory,
+      );
+
+      // Add AI message
+      final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+      await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .doc(aiMessageId)
+          .set({
+        'id': aiMessageId,
+        'senderId': 'premium_ai',
+        'senderName': 'Health Guru',
+        'content': aiResponse,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await _firestore.collection('conversations').doc(conversationId).update({
+        'lastMessage': aiResponse,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      _isAITyping = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error: $e');
+      _isAITyping = false;
+      notifyListeners();
     }
   }
 
