@@ -211,33 +211,204 @@ class HealthDataProvider extends ChangeNotifier {
   }
 
   List<AchievementBadge> get badges {
-    return [
-      AchievementBadge(
-        title: 'Sleep Champion',
-        description: '7 days of consistent sleep',
-        icon: '🌙',
-        color: const Color(0xFFA8B5A0),
-      ),
-      AchievementBadge(
-        title: 'Healthy Eater',
-        description: 'Tracked 50 meals',
-        icon: '🥗',
-        color: const Color(0xFFE8C4A0),
-      ),
-      AchievementBadge(
-        title: 'Active Achiever',
-        description: 'Completed 10 workouts',
-        icon: '💪',
-        color: const Color(0xFFA0C4E8),
-      ),
-      AchievementBadge(
-        title: 'Streak Master',
-        description: '$_currentStreak day streak',
-        icon: '🔥',
-        color: const Color(0xFFFF6B6B),
-      ),
-    ];
+  final badges = <AchievementBadge>[];
+  
+  // Calculate actual stats from logs
+  final totalLogs = _healthData.logs.length;
+  final last7Days = _healthData.last7Days;
+  final sleepSeries = _healthData.weeklySleep;
+  final stepsSeries = _healthData.weeklySteps;
+  final exerciseSeries = _healthData.weeklyExerciseMinutes;
+  
+  // Count consistent days (non-zero values)
+  final consistentSleepDays = sleepSeries.where((h) => h >= 7).length;
+  final consistentStepDays = stepsSeries.where((s) => s >= 8000).length;
+  final consistentExerciseDays = exerciseSeries.where((m) => m >= 30).length;
+  
+  // 1. Sleep Champion Badge
+  if (consistentSleepDays >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Sleep Champion',
+      description: '$consistentSleepDays days of 7+ hours sleep',
+      icon: '🌙',
+      color: const Color(0xFFA8B5A0),
+    ));
+  } else if (consistentSleepDays >= 5) {
+    badges.add(AchievementBadge(
+      title: 'Sleep Warrior',
+      description: '$consistentSleepDays days of good sleep',
+      icon: '😴',
+      color: const Color(0xFFA8B5A0),
+    ));
+  } else if (consistentSleepDays >= 3) {
+    badges.add(AchievementBadge(
+      title: 'Sleep Starter',
+      description: '$consistentSleepDays days of rest',
+      icon: '🛌',
+      color: const Color(0xFFA8B5A0),
+    ));
   }
+  
+  // 2. Active Achiever Badge (Steps)
+  if (consistentStepDays >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Walking Legend',
+      description: '$consistentStepDays days of 8k+ steps',
+      icon: '🏆',
+      color: const Color(0xFFA0C4E8),
+    ));
+  } else if (consistentStepDays >= 5) {
+    badges.add(AchievementBadge(
+      title: 'Active Achiever',
+      description: '$consistentStepDays days of walking',
+      icon: '💪',
+      color: const Color(0xFFA0C4E8),
+    ));
+  } else if (consistentStepDays >= 3) {
+    badges.add(AchievementBadge(
+      title: 'On The Move',
+      description: '$consistentStepDays active days',
+      icon: '🚶',
+      color: const Color(0xFFA0C4E8),
+    ));
+  }
+  
+  // 3. Exercise Badge
+  if (consistentExerciseDays >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Fitness Master',
+      description: '$consistentExerciseDays days of 30+ min exercise',
+      icon: '🏋️',
+      color: const Color(0xFFE8C4A0),
+    ));
+  } else if (consistentExerciseDays >= 5) {
+    badges.add(AchievementBadge(
+      title: 'Workout Warrior',
+      description: '$consistentExerciseDays workout days',
+      icon: '💪',
+      color: const Color(0xFFE8C4A0),
+    ));
+  } else if (consistentExerciseDays >= 3) {
+    badges.add(AchievementBadge(
+      title: 'Exercise Starter',
+      description: '$consistentExerciseDays active sessions',
+      icon: '🏃',
+      color: const Color(0xFFE8C4A0),
+    ));
+  }
+  
+  // 4. Streak Master Badge
+  if (_currentStreak >= 30) {
+    badges.add(AchievementBadge(
+      title: 'Streak Legend',
+      description: '$_currentStreak day streak! 🔥',
+      icon: '🔥',
+      color: const Color(0xFFFF6B6B),
+    ));
+  } else if (_currentStreak >= 14) {
+    badges.add(AchievementBadge(
+      title: 'Streak Master',
+      description: '$_currentStreak day streak',
+      icon: '🔥',
+      color: const Color(0xFFFF6B6B),
+    ));
+  } else if (_currentStreak >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Week Warrior',
+      description: '$_currentStreak day streak',
+      icon: '🔥',
+      color: const Color(0xFFFF6B6B),
+    ));
+  } else if (_currentStreak >= 3) {
+    badges.add(AchievementBadge(
+      title: 'Getting Started',
+      description: '$_currentStreak day streak',
+      icon: '⭐',
+      color: const Color(0xFFFF6B6B),
+    ));
+  }
+  
+  // 5. Data Logger Badge
+  if (totalLogs >= 90) {
+    badges.add(AchievementBadge(
+      title: 'Data Master',
+      description: 'Tracked $totalLogs days!',
+      icon: '📊',
+      color: const Color(0xFF9B59B6),
+    ));
+  } else if (totalLogs >= 30) {
+    badges.add(AchievementBadge(
+      title: 'Consistent Tracker',
+      description: 'Logged $totalLogs days',
+      icon: '📈',
+      color: const Color(0xFF9B59B6),
+    ));
+  } else if (totalLogs >= 14) {
+    badges.add(AchievementBadge(
+      title: 'Regular Logger',
+      description: 'Tracked $totalLogs days',
+      icon: '📝',
+      color: const Color(0xFF9B59B6),
+    ));
+  } else if (totalLogs >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Weekly Tracker',
+      description: 'Logged $totalLogs days',
+      icon: '✅',
+      color: const Color(0xFF9B59B6),
+    ));
+  }
+  
+  // 6. Healthy Eater Badge (based on calories tracked)
+  final avgCalories = _healthData.weeklyCalories.isEmpty 
+      ? 0 
+      : _healthData.weeklyCalories.reduce((a, b) => a + b) / _healthData.weeklyCalories.length;
+  
+  if (avgCalories >= 1800 && avgCalories <= 2200 && totalLogs >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Healthy Eater',
+      description: 'Balanced calorie intake',
+      icon: '🥗',
+      color: const Color(0xFF27AE60),
+    ));
+  }
+  
+  // 7. Early Bird Badge (if average sleep >= 8 hours)
+  final avgSleep = sleepSeries.isEmpty 
+      ? 0 
+      : sleepSeries.reduce((a, b) => a + b) / sleepSeries.length;
+  
+  if (avgSleep >= 8 && totalLogs >= 7) {
+    badges.add(AchievementBadge(
+      title: 'Well Rested',
+      description: 'Average ${avgSleep.toStringAsFixed(1)}h sleep',
+      icon: '🌟',
+      color: const Color(0xFF3498DB),
+    ));
+  }
+  
+  // 8. All-Rounder Badge (good in all categories)
+  if (consistentSleepDays >= 5 && consistentStepDays >= 5 && consistentExerciseDays >= 3) {
+    badges.add(AchievementBadge(
+      title: 'All-Rounder',
+      description: 'Balanced health habits',
+      icon: '🎯',
+      color: const Color(0xFFE67E22),
+    ));
+  }
+  
+  // If no badges earned yet, show a motivational one
+  if (badges.isEmpty) {
+    badges.add(AchievementBadge(
+      title: 'Getting Started',
+      description: 'Keep logging to earn badges!',
+      icon: '🌱',
+      color: const Color(0xFF95A5A6),
+    ));
+  }
+  
+  return badges;
+}
 
   String get todayInsight {
     if (hasMetDailyGoals) {

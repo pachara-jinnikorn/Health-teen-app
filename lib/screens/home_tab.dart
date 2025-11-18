@@ -40,17 +40,8 @@ class HomeTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== Header =====
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Health Teen', style: AppTextStyles.heading1),
-                    IconButton(
-                      icon: const Icon(Icons.settings_outlined),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
+              // ===== Header =====
+                const Text('Health Teen', style: AppTextStyles.heading1),
                 const SizedBox(height: AppSpacing.sm),
 
                 // ===== Greeting =====

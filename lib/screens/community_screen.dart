@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/community_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/post_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -30,22 +31,48 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
             ),
 
-            // Groups Section
-            SizedBox(
-              height: 120,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                children: [
-                  _buildGroupCard('Fitness', '🏃', 1234, const Color(0xFF6366F1)),
-                  _buildGroupCard('Nutrition', '🥗', 892, const Color(0xFF10B981)),
-                  _buildGroupCard('Mental Health', '🧘', 654, const Color(0xFF8B5CF6)),
-                  _buildGroupCard('Sleep', '😴', 423, const Color(0xFFF59E0B)),
-                ],
-              ),
-            ),
+            // Community Stats Card
+Consumer<CommunityProvider>(
+  builder: (context, provider, _) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final myPosts = provider.posts.where((p) => p.authorId == currentUserId).length;
+    final totalLikes = provider.posts
+        .where((p) => p.authorId == currentUserId)
+        .fold<int>(0, (sum, post) => sum + post.likes);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem('${provider.posts.length}', 'Total Posts', Icons.article),
+          Container(width: 1, height: 40, color: Colors.white30),
+          _buildStatItem('$myPosts', 'Your Posts', Icons.edit),
+          Container(width: 1, height: 40, color: Colors.white30),
+          _buildStatItem('$totalLikes', 'Your Likes', Icons.favorite),
+        ],
+      ),
+    );
+  },
+),
 
-            const SizedBox(height: AppSpacing.md),
+const SizedBox(height: AppSpacing.md),
 
             // Filter Dropdown
             Padding(
@@ -143,58 +170,29 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  Widget _buildGroupCard(String name, String emoji, int members, Color color) {
-    return Container(
-      width: 140,
-      height: 120,
-      margin: const EdgeInsets.only(right: AppSpacing.md),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildStatItem(String value, String label, IconData icon) {
+  return Column(
+    children: [
+      Icon(icon, color: Colors.white, size: 24),
+      const SizedBox(height: 4),
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 6),
-          Text(
-            name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '$members members',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 10,
-            ),
-            maxLines: 1,
-          ),
-        ],
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.white.withOpacity(0.9),
+        ),
       ),
-    );
-  }
-
+    ],
+  );
+}
   void _showCreatePostDialog(BuildContext context) {
     final controller = TextEditingController();
 
