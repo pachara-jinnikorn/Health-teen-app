@@ -39,6 +39,34 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Health Teen',
       debugShowCheckedModeBanner: false,
+      
+      // 👇 1. THIS IS THE NEW PART THAT MAKES IT LOOK LIKE MOBILE
+      builder: (context, child) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500), // 📱 Max width 500px
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white, // Ensure background is white
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+                border: Border.symmetric(
+                  vertical: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              // The 'child' here is your entire app (Screens, Navigator, Dialogs)
+              child: child!, 
+            ),
+          ),
+        );
+      },
+      // 👆 END OF NEW PART
+
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           if (auth.isLoading) {
