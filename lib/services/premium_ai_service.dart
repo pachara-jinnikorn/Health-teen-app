@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class PremiumAIService {
   // 🔑 REPLACE THIS WITH YOUR ACTUAL API KEY FROM STEP 1
-  static const String _apiKey = 'AIzaSyD9hnK_cZl10t9ifdJymFvy4tnNun3Xdmc';
+  static const String _apiKey = 'AIzaSyCgnQAyq9M5UbKyyyTlq_j4OenXJGEeVNc';
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
   static Future<String> sendMessage(
