@@ -23,7 +23,7 @@ class ChatScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Health Teen', style: AppTextStyles.heading1),
-                  // ✅ NEW: Button to start new chat
+                  // ✅ Button to start new chat
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, size: 28),
                     color: AppColors.primary,
@@ -32,7 +32,7 @@ class ChatScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Chat List
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -41,9 +41,9 @@ class ChatScreen extends StatelessWidget {
                 child: Text('Chat', style: AppTextStyles.heading2),
               ),
             ),
-            
+
             const SizedBox(height: AppSpacing.md),
-            
+
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, provider, _) {
@@ -73,7 +73,8 @@ class ChatScreen extends StatelessWidget {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     itemCount: provider.conversations.length,
                     itemBuilder: (context, index) {
                       final conversation = provider.conversations[index];
@@ -185,7 +186,7 @@ class ChatScreen extends StatelessWidget {
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d';
     } else if (difference.inHours > 0) {
@@ -197,127 +198,218 @@ class ChatScreen extends StatelessWidget {
     }
   }
 
-  // ✅ NEW: Show dialog to select a user to chat with
+  // ✅ Show dialog with Privacy filtering and Search
   void _showNewChatDialog(BuildContext context) {
+    final searchController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          constraints: const BoxConstraints(maxHeight: 500),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Start New Chat',
-                    style: AppTextStyles.heading2,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(dialogContext),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              
-              // Search bar
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search users...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.background,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            constraints: const BoxConstraints(maxHeight: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Start New Chat',
+                      style: AppTextStyles.heading2,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(dialogContext),
+                    ),
+                  ],
                 ),
-              ),
-              
-              const SizedBox(height: AppSpacing.md),
-              
-              // User list
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .limit(20)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                const SizedBox(height: AppSpacing.md),
 
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('No users found'),
-                      );
-                    }
+                // Search bar
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search users...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                  ),
+                  onChanged: (value) => setState(() {}),
+                ),
 
-                    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                    final users = snapshot.data!.docs
-                        .where((doc) => doc.id != currentUserId)
-                        .toList();
+                const SizedBox(height: AppSpacing.md),
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: users.length,
-                      itemBuilder: (context, index) {
-                        final userData = users[index].data() as Map<String, dynamic>;
-                        final userId = users[index].id;
-                        final firstName = userData['firstname'] ?? 'User';
-                        final lastName = userData['lastname'] ?? '';
-                        final displayName = lastName.isNotEmpty 
-                            ? '$firstName $lastName' 
-                            : firstName;
+                // User list
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                        return ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Center(
-                              child: Text('👤', style: TextStyle(fontSize: 20)),
-                            ),
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(child: Text('No users found'));
+                      }
+
+                      final currentUserId =
+                          FirebaseAuth.instance.currentUser?.uid;
+                      final searchQuery = searchController.text.toLowerCase();
+
+                      // ✅ Filter users by Privacy Settings and Search Query
+                      final filteredUsers = snapshot.data!.docs.where((doc) {
+                        if (doc.id == currentUserId) {
+                          debugPrint('⏭️ Skipping current user');
+                          return false;
+                        }
+
+                        final userData = doc.data() as Map<String, dynamic>;
+
+                        debugPrint(
+                            '👤 Checking user: ${userData['firstname']} ${userData['lastname']}');
+                        debugPrint(
+                            '   Privacy: ${userData['privacySettings']}');
+
+                        // ✅ Check Privacy Settings (ถ้าไม่มี ให้ถือว่าเป็น true)
+                        final privacy = userData['privacySettings']
+                            as Map<String, dynamic>?;
+
+                        final showInSearch = privacy?['showInSearch'] ?? true;
+                        final profilePublic = privacy?['profilePublic'] ?? true;
+
+                        if (!showInSearch) {
+                          debugPrint('   ❌ Hidden from search');
+                          return false;
+                        }
+
+                        if (!profilePublic) {
+                          debugPrint('   ❌ Private profile');
+                          return false;
+                        }
+
+                        // Filter by search query (only if user is typing)
+                        if (searchQuery.isNotEmpty) {
+                          final firstname = (userData['firstname'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          final lastname = (userData['lastname'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          final email = (userData['email'] ?? '')
+                              .toString()
+                              .toLowerCase();
+
+                          final matches = firstname.contains(searchQuery) ||
+                              lastname.contains(searchQuery) ||
+                              email.contains(searchQuery);
+
+                          debugPrint('   🔍 Search match: $matches');
+                          return matches;
+                        }
+
+                        debugPrint('   ✅ Showing user');
+                        return true;
+                      }).toList();
+
+                      debugPrint(
+                          '📋 Total filtered users: ${filteredUsers.length}');
+
+                      if (filteredUsers.isEmpty) {
+                        return Center(
+                          child: Text(
+                            searchQuery.isEmpty
+                                ? 'No users available'
+                                : 'No users found matching "$searchQuery"',
                           ),
-                          title: Text(displayName),
-                          subtitle: Text(userData['email'] ?? ''),
-                          onTap: () async {
-                            // Close the dialog
-                            Navigator.pop(dialogContext);
-                            
-                            // Show loading
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Creating conversation...'),
-                                duration: Duration(seconds: 1),
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredUsers.length,
+                        itemBuilder: (context, index) {
+                          final userDoc = filteredUsers[index];
+                          final userData =
+                              userDoc.data() as Map<String, dynamic>;
+                          final userId = userDoc.id;
+                          final firstName = userData['firstname'] ?? 'User';
+                          final lastName = userData['lastname'] ?? '';
+                          final displayName = lastName.isNotEmpty
+                              ? '$firstName $lastName'
+                              : firstName;
+
+                          return ListTile(
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                            );
-                            
-                            // Create conversation
-                            final conversationId = await context
-                                .read<ChatProvider>()
-                                .createConversation(userId);
-                            
-                            if (conversationId != null) {
-                              // Get the conversation details
-                              final convDoc = await FirebaseFirestore.instance
-                                  .collection('conversations')
-                                  .doc(conversationId)
-                                  .get();
-                              
-                              if (convDoc.exists && context.mounted) {
-                                final conversation = convDoc.data();
+                              child: Center(
+                                child: Text(
+                                  firstName.isNotEmpty
+                                      ? firstName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            title: Text(displayName),
+                            subtitle: Text(userData['email'] ?? ''),
+                            onTap: () async {
+                              Navigator.pop(dialogContext);
+
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Creating conversation...'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+
+                              // ✅ Create conversation (Privacy check in ChatProvider)
+                              final conversationId = await dialogContext
+                                  .read<ChatProvider>()
+                                  .createConversation(userId);
+
+                              if (conversationId == null) {
+                                // ✅ Show error if cannot create chat
+                                if (dialogContext.mounted) {
+                                  ScaffoldMessenger.of(dialogContext)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Cannot message this user 🔒'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              if (dialogContext.mounted) {
+                                final conversation = dialogContext
+                                    .read<ChatProvider>()
+                                    .conversations
+                                    .firstWhere(
+                                        (conv) => conv.id == conversationId);
+
                                 Navigator.push(
-                                  context,
+                                  dialogContext,
                                   MaterialPageRoute(
                                     builder: (_) => ConversationScreen(
                                       conversation: conversation,
@@ -325,15 +417,15 @@ class ChatScreen extends StatelessWidget {
                                   ),
                                 );
                               }
-                            }
-                          },
-                        );
-                      },
-                    );
-                  },
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

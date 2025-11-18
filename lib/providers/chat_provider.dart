@@ -10,7 +10,7 @@ class ChatProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AIService _aiService = AIService();
-  
+
   List<Conversation> _conversations = [];
   bool _isAITyping = false;
   StreamSubscription? _conversationsSubscription; // ✅ Track subscription
@@ -82,7 +82,7 @@ class ChatProvider extends ChangeNotifier {
         .snapshots()
         .listen((snapshot) {
       debugPrint('📨 Got ${snapshot.docs.length} conversations');
-      
+
       _conversations = snapshot.docs
           .map((doc) {
             try {
@@ -100,7 +100,7 @@ class ChatProvider extends ChangeNotifier {
 
       // Sort by timestamp (newest first)
       _conversations.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      
+
       debugPrint('✅ Loaded ${_conversations.length} conversations');
       notifyListeners();
     }, onError: (error) {
@@ -111,6 +111,7 @@ class ChatProvider extends ChangeNotifier {
   /// ✅ PUBLIC method to ensure AI conversation exists
   Future<void> ensureAIConversationExists() async {
     final userId = _auth.currentUser?.uid;
+
     if (userId == null) {
       debugPrint('❌ No user logged in');
       return;
@@ -118,62 +119,72 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       final aiConvId = 'ai_$userId';
+      debugPrint('🔍 Checking AI conversation: $aiConvId');
+
       final aiConvRef = _firestore.collection('conversations').doc(aiConvId);
       final aiConvDoc = await aiConvRef.get();
 
       if (!aiConvDoc.exists) {
-        debugPrint('✅ Creating AI conversation for user: $userId');
-        
+        debugPrint('✅ Creating AI conversation...');
+
         final now = DateTime.now();
-        
+
         // Create AI conversation document
-        await aiConvRef.set({
-          'id': aiConvId,
-          'name': 'Dr. Wellness',
-          'avatar': '👨‍⚕️',
-          'lastMessage': 'Hi! I\'m Dr. Wellness, your AI health coach.',
-          'timestamp': Timestamp.fromDate(now),
-          'isAI': true,
-          'participants': [userId],
-        });
+        try {
+          await aiConvRef.set({
+            'id': aiConvId,
+            'name': 'Dr. Wellness',
+            'avatar': '👨‍⚕️',
+            'lastMessage': 'Hi! I\'m Dr. Wellness, your AI health coach.',
+            'timestamp': Timestamp.fromDate(now),
+            'isAI': true,
+            'participants': [userId],
+          });
 
-        debugPrint('✅ AI conversation document created');
+          debugPrint('✅ AI conversation created successfully');
+        } catch (e) {
+          debugPrint('❌ Failed to create AI conversation: $e');
+          rethrow; // ให้ error ออกมา
+        }
 
-        // Wait a moment for Firestore to process
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 500));
 
         // Add welcome message
         final welcomeMessageId = now.millisecondsSinceEpoch.toString();
-        
-        await _firestore
-            .collection('conversations')
-            .doc(aiConvId)
-            .collection('messages')
-            .doc(welcomeMessageId)
-            .set({
-          'id': welcomeMessageId,
-          'senderId': 'ai',
-          'senderName': 'Dr. Wellness',
-          'content': 'Hi! I\'m Dr. Wellness, your AI health coach. How can I help you today?',
-          'timestamp': Timestamp.fromDate(now),
-        });
 
-        debugPrint('✅ Welcome message added');
+        try {
+          await _firestore
+              .collection('conversations')
+              .doc(aiConvId)
+              .collection('messages')
+              .doc(welcomeMessageId)
+              .set({
+            'id': welcomeMessageId,
+            'senderId': 'ai',
+            'senderName': 'Dr. Wellness',
+            'content':
+                'Hi! I\'m Dr. Wellness, your AI health coach. How can I help you today?',
+            'timestamp': Timestamp.fromDate(now),
+          });
+
+          debugPrint('✅ Welcome message added');
+        } catch (e) {
+          debugPrint('❌ Failed to add welcome message: $e');
+          // ไม่ throw เพราะ conversation สร้างสำเร็จแล้ว
+        }
       } else {
         debugPrint('✅ AI conversation already exists');
       }
-    } catch (e) {
-      debugPrint('❌ Error creating AI conversation: $e');
-      // Try again after a delay
-      await Future.delayed(const Duration(seconds: 2));
-      await ensureAIConversationExists();
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error in ensureAIConversationExists: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
   /// ✅ Get messages stream for a conversation
   Stream<List<ChatMessage>> getMessagesStream(String conversationId) {
     final currentUserId = _auth.currentUser?.uid ?? '';
-    
+
     return _firestore
         .collection('conversations')
         .doc(conversationId)
@@ -181,20 +192,21 @@ class ChatProvider extends ChangeNotifier {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snapshot) {
-          debugPrint('📨 Got ${snapshot.docs.length} messages for conversation: $conversationId');
-          return snapshot.docs
-              .map((doc) {
-                try {
-                  return ChatMessage.fromJson(doc.data(), currentUserId);
-                } catch (e) {
-                  debugPrint('❌ Error parsing message: $e');
-                  return null;
-                }
-              })
-              .where((msg) => msg != null)
-              .cast<ChatMessage>()
-              .toList();
-        });
+      debugPrint(
+          '📨 Got ${snapshot.docs.length} messages for conversation: $conversationId');
+      return snapshot.docs
+          .map((doc) {
+            try {
+              return ChatMessage.fromJson(doc.data(), currentUserId);
+            } catch (e) {
+              debugPrint('❌ Error parsing message: $e');
+              return null;
+            }
+          })
+          .where((msg) => msg != null)
+          .cast<ChatMessage>()
+          .toList();
+    });
   }
 
   /// ✅ Send a regular message (non-AI)
@@ -207,10 +219,11 @@ class ChatProvider extends ChangeNotifier {
       final userData = userDoc.data();
       final firstName = userData?['firstname'] ?? 'User';
       final lastName = userData?['lastname'] ?? '';
-      final displayName = lastName.isNotEmpty ? '$firstName $lastName' : firstName;
+      final displayName =
+          lastName.isNotEmpty ? '$firstName $lastName' : firstName;
 
       final messageId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       await _firestore
           .collection('conversations')
           .doc(conversationId)
@@ -249,11 +262,12 @@ class ChatProvider extends ChangeNotifier {
       final userData = userDoc.data();
       final firstName = userData?['firstname'] ?? 'User';
       final lastName = userData?['lastname'] ?? '';
-      final displayName = lastName.isNotEmpty ? '$firstName $lastName' : firstName;
+      final displayName =
+          lastName.isNotEmpty ? '$firstName $lastName' : firstName;
 
       // Add user message
       final userMessageId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       await _firestore
           .collection('conversations')
           .doc(conversationId)
@@ -285,7 +299,7 @@ class ChatProvider extends ChangeNotifier {
 
       // Add AI message
       final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       await _firestore
           .collection('conversations')
           .doc(conversationId)
@@ -313,11 +327,32 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ Create a new conversation with another user
+  /// ✅ Create a new conversation with another user (with Privacy check)
   Future<String?> createConversation(String otherUserId) async {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null) return null;
+
+      // ✅ ตรวจสอบ privacy ก่อน (เพิ่มส่วนนี้)
+      final otherUserDoc =
+          await _firestore.collection('users').doc(otherUserId).get();
+
+      if (!otherUserDoc.exists) {
+        debugPrint('❌ User not found');
+        return null;
+      }
+
+      final otherUserData = otherUserDoc.data();
+
+      // ตรวจสอบว่า user อนุญาตให้ส่งข้อความได้ไหม
+      final privacy =
+          otherUserData?['privacySettings'] as Map<String, dynamic>?;
+      final allowMessages = privacy?['allowMessages'] ?? true; // default true
+
+      if (!allowMessages) {
+        debugPrint('🔒 User has disabled messages');
+        return null;
+      }
 
       // Check if conversation already exists
       final existingConv = await _firestore
@@ -334,14 +369,14 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Create new conversation
-      final otherUserDoc = await _firestore.collection('users').doc(otherUserId).get();
-      final otherUserData = otherUserDoc.data();
+      // ⚠️ ลบบรรทัด final otherUserDoc = ... ออก เพราะดึงมาแล้วด้านบน
       final firstName = otherUserData?['firstname'] ?? 'User';
       final lastName = otherUserData?['lastname'] ?? '';
-      final displayName = lastName.isNotEmpty ? '$firstName $lastName' : firstName;
+      final displayName =
+          lastName.isNotEmpty ? '$firstName $lastName' : firstName;
 
       final convId = _firestore.collection('conversations').doc().id;
-      
+
       await _firestore.collection('conversations').doc(convId).set({
         'id': convId,
         'name': displayName,
