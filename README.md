@@ -1,4 +1,4 @@
-# 🍏 Healthteen App (v2)
+# 🍏 Healthteen App
 
 A modern wellness application designed to help users track their daily health, manage their profile, and stay connected with a supportive community.
 
@@ -11,7 +11,7 @@ The application is deployed on **Vercel** and accessible here:
 
 ## ✨ Core Features
 
-Healthteen v2 focuses on **user management**, **daily wellness tracking**, and **community interaction**.
+Healthteen focuses on **user management**, **daily wellness tracking**, and **community interaction**.
 
 ### 🔐 Login & Authentication
 - Secure login and credential validation  
