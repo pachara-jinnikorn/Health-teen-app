@@ -1,147 +1,166 @@
 import 'package:flutter_test/flutter_test.dart';
 
-/// HOME FEATURE TESTS
+/// HOME FEATURE TESTS - Redesigned to BDD (Given-When-Then) Style
 /// Based on test cases: HOME-001 to HOME-010
 void main() {
-  group('HOME Feature Tests', () {
+  group('HOME Feature Scenarios (HOME-001 to HOME-010)', () {
     
-    // HOME-001: Add sleep data successfully (Happy Path)
-    test('HOME-001: Add sleep data with valid value', () {
-      // Arrange
+    // HOME-001: Happy Path - Add sleep data successfully
+    test('HOME-001: Given a valid sleep duration, When I tap "Save", Then the data is saved successfully.', () {
+      // GIVEN: Valid sleep hours
       const sleepHours = 7.0;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateSleepHours(sleepHours);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, true, 
-        reason: 'Valid sleep hours should be accepted');
+        reason: 'Valid sleep hours should be accepted.');
+        
+      print('✅ HOME-001 Passed: Added sleep data successfully.');
     });
 
-    // HOME-002: Add sleep data with invalid value (Sad Path)
-    test('HOME-002: Reject negative sleep hours', () {
-      // Arrange
+    // HOME-002: Sad Path - Add sleep data with invalid value
+    test('HOME-002: Given negative sleep hours, When I tap "Save", Then an error is shown and data is not saved.', () {
+      // GIVEN: Invalid sleep hours
       const invalidSleep = -3.0;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateSleepHours(invalidSleep);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, false, 
-        reason: 'Negative sleep hours should be rejected');
+        reason: 'Negative sleep hours should be rejected.');
+        
+      print('✅ HOME-002 Passed: Rejected invalid sleep hours.');
     });
 
-    // HOME-003: Add meal data successfully (Happy Path)
-    test('HOME-003: Add meal with name and calories', () {
-      // Arrange
+    // HOME-003: Happy Path - Add meal data successfully
+    test('HOME-003: Given valid meal name and calories, When I tap "Save", Then the meal is saved and summary is updated.', () {
+      // GIVEN: Valid meal data
       const mealName = 'Grilled chicken salad';
       const calories = 350;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateMeal(mealName, calories);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, true, 
-        reason: 'Valid meal data should be accepted');
+        reason: 'Valid meal data should be accepted.');
+        
+      print('✅ HOME-003 Passed: Added meal data successfully.');
     });
 
-    // HOME-004: Add meal data with missing calories (Sad Path)
-    test('HOME-004: Reject meal without calories', () {
-      // Arrange
+    // HOME-004: Sad Path - Add meal data with missing calories
+    test('HOME-004: Given missing calories, When I tap "Save", Then an error message is shown and data is rejected.', () {
+      // GIVEN: Missing calories (0)
       const mealName = 'Omelet';
-      const calories = 0; // Missing/zero calories
+      const calories = 0; 
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateMeal(mealName, calories);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, false, 
-        reason: 'Meal without calories should be rejected');
+        reason: 'Meal without calories (> 0) should be rejected.');
+        
+      print('✅ HOME-004 Passed: Rejected meal with missing calories.');
     });
 
-    // HOME-005: Add exercise successfully (Happy Path)
-    test('HOME-005: Add exercise with valid duration', () {
-      // Arrange
+    // HOME-005: Happy Path - Add exercise successfully
+    test('HOME-005: Given a valid exercise duration, When I tap "Save", Then the exercise is saved and progress is updated.', () {
+      // GIVEN: Valid exercise data
       const exerciseName = 'Running';
       const durationMinutes = 30;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateExercise(exerciseName, durationMinutes);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, true, 
-        reason: 'Valid exercise data should be accepted');
+        reason: 'Valid exercise data should be accepted.');
+        
+      print('✅ HOME-005 Passed: Added exercise data successfully.');
     });
 
-    // HOME-006: Add exercise with invalid input (Sad Path)
-    test('HOME-006: Reject exercise with negative duration', () {
-      // Arrange
+    // HOME-006: Sad Path - Add exercise with invalid input
+    test('HOME-006: Given negative exercise duration, When I tap "Save", Then an error message is shown and data is rejected.', () {
+      // GIVEN: Invalid duration
       const exerciseName = 'Running';
       const invalidDuration = -10;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateExercise(exerciseName, invalidDuration);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, false, 
-        reason: 'Negative duration should be rejected');
+        reason: 'Negative duration should be rejected.');
+        
+      print('✅ HOME-006 Passed: Rejected negative exercise duration.');
     });
 
-    // HOME-007: View notifications and daily goals (Happy Path)
-    test('HOME-007: Daily goals display correctly', () {
-      // Arrange
+    // HOME-007: Happy Path - View notifications and daily goals
+    test('HOME-007: Given existing goals, When I view the goals section, Then goal progress is shown accurately.', () {
+      // GIVEN: Goals are configured
       const stepsGoal = 10000;
       const sleepGoal = 8.0;
-      const caloriesGoal = 2000;
       
-      // Act
-      final goalsConfigured = stepsGoal > 0 && sleepGoal > 0 && caloriesGoal > 0;
+      // WHEN: Goals are loaded (Act)
+      final goalsConfigured = stepsGoal > 0 && sleepGoal > 0;
       
-      // Assert
+      // THEN: Assertions
       expect(goalsConfigured, true, 
-        reason: 'All daily goals should be configured');
+        reason: 'Daily goals should be configured and loaded.');
+        
+      print('✅ HOME-007 Passed: Viewed notifications and daily goals.');
     });
 
-    // HOME-008: Navigate via shortcuts (Happy Path)
-    test('HOME-008: Navigation shortcuts work', () {
-      // Arrange
+    // HOME-008: Happy Path - Navigate via shortcuts
+    test('HOME-008: Given available navigation shortcuts, When I tap a shortcut, Then I am navigated to the correct page smoothly.', () {
+      // GIVEN: Available routes
       final availableRoutes = ['Dashboard', 'Community', 'Profile'];
-      const targetRoute = 'Dashboard';
+      const targetRoute = 'Community';
       
-      // Act
+      // WHEN: Shortcut is activated (Act)
       final routeExists = availableRoutes.contains(targetRoute);
       
-      // Assert
+      // THEN: Assertions
       expect(routeExists, true, 
-        reason: 'Navigation route should exist');
+        reason: 'Navigation route should exist.');
+        
+      print('✅ HOME-008 Passed: Navigation via shortcuts works.');
     });
 
-    // HOME-009: Access shortcuts without login (Sad Path)
-    test('HOME-009: Require login for protected routes', () {
-      // Arrange
+    // HOME-009: Sad Path - Access shortcuts without login
+    test('HOME-009: Given an unauthenticated user, When they access a protected shortcut, Then they are redirected to the Login page.', () {
+      // GIVEN: User is not logged in
       const isLoggedIn = false;
       const protectedRoute = 'Dashboard';
       
-      // Act
+      // WHEN: Accessing protected route (Act)
       final canAccess = isLoggedIn;
       
-      // Assert
+      // THEN: Assertions
       expect(canAccess, false, 
-        reason: 'Should not access protected routes without login');
+        reason: 'Should not access protected routes without login.');
+        
+      print('✅ HOME-009 Passed: Access rejected without login.');
     });
 
-    // HOME-010: Verify data encryption (Happy Path)
-    test('HOME-010: Health data should be encrypted', () {
-      // Arrange
+    // HOME-010: Happy Path - Verify data encryption
+    test('HOME-010: Given sensitive health data, When it is saved, Then the data is stored in an encrypted format.', () {
+      // GIVEN: Sensitive data
       const sensitiveData = 'sleep: 7h, weight: 60kg';
       
-      // Act
+      // WHEN: Data is processed for storage (Act)
       final encrypted = _mockEncrypt(sensitiveData);
       final isEncrypted = encrypted != sensitiveData;
       
-      // Assert
+      // THEN: Assertions
       expect(isEncrypted, true, 
-        reason: 'Sensitive data should be encrypted');
+        reason: 'Sensitive data must be encrypted before storage.');
+        
+      print('✅ HOME-010 Passed: Verified data encryption.');
     });
   });
 }

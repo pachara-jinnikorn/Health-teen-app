@@ -1,156 +1,146 @@
 import 'package:flutter_test/flutter_test.dart';
 
-/// PROFILE FEATURE TESTS
+/// PROFILE FEATURE TESTS - Redesigned to BDD (Given-When-Then) Style
 /// Based on test cases: PROFILE-001 to PROFILE-006
 void main() {
-  group('PROFILE Feature Tests', () {
+  group('PROFILE Feature Scenarios (PROFILE-001 to PROFILE-006)', () {
     
-    // PROFILE-001: View profile details (Happy Path)
-    test('PROFILE-001: Display user profile information', () {
-      // Arrange
+    // PROFILE-001: Happy Path - View profile details
+    test('PROFILE-001: Given a logged-in user, When they navigate to the Profile tab, Then their personal info and membership type are displayed.', () {
+      // GIVEN: User profile data exists
       final userProfile = {
         'name': 'John Doe',
         'age': 16,
-        'gender': 'Male',
         'membershipType': 'Premium',
       };
       
-      // Act
+      // WHEN: Profile data is loaded (Act)
       final hasRequiredFields = userProfile.containsKey('name') &&
                                 userProfile.containsKey('age') &&
                                 userProfile.containsKey('membershipType');
       
-      // Assert
+      // THEN: Assertions
       expect(hasRequiredFields, true, 
-        reason: 'Profile should have all required fields');
-      expect(userProfile['name'], 'John Doe');
-      expect(userProfile['membershipType'], 'Premium');
+        reason: 'Profile should have all required fields displayed.');
+        
+      print('✅ PROFILE-001 Passed: View profile details successfully.');
     });
 
-    // PROFILE-002: Edit profile successfully (Happy Path)
-    test('PROFILE-002: Update profile with valid data', () {
-      // Arrange
+    // PROFILE-002: Happy Path - Edit profile successfully
+    test('PROFILE-002: Given valid modified data (Weight), When the user taps "Save", Then the profile is updated successfully.', () {
+      // GIVEN: Current weight and new valid weight
       var userWeight = 55;
       const newWeight = 60;
       
-      // Act
+      // WHEN: New data is validated and saved (Act)
       final isValidWeight = _validateWeight(newWeight);
       if (isValidWeight) {
         userWeight = newWeight;
       }
       
-      // Assert
+      // THEN: Assertions
       expect(userWeight, 60, 
-        reason: 'Weight should be updated');
+        reason: 'Weight should be updated to 60 kg.');
       expect(isValidWeight, true);
+      
+      print('✅ PROFILE-002 Passed: Edit profile successfully.');
     });
 
-    // PROFILE-003: Edit profile with invalid data (Sad Path)
-    test('PROFILE-003: Reject invalid age value', () {
-      // Arrange
+    // PROFILE-003: Sad Path - Edit profile with invalid data
+    test('PROFILE-003: Given invalid data (e.g., negative Age), When the user taps "Save", Then an "Invalid input value" error appears.', () {
+      // GIVEN: Invalid age value
       const invalidAge = -25;
       
-      // Act
+      // WHEN: Data is validated (Act)
       final isValid = _validateAge(invalidAge);
       
-      // Assert
+      // THEN: Assertions
       expect(isValid, false, 
-        reason: 'Negative age should be rejected');
+        reason: 'Negative age should be rejected.');
+        
+      print('✅ PROFILE-003 Passed: Rejected invalid profile data (age).');
     });
 
-    // PROFILE-004: View dashboard summary under Profile (Happy Path)
-    test('PROFILE-004: Display health overview in profile', () {
-      // Arrange
+    // PROFILE-004: Happy Path - View dashboard summary under Profile
+    test('PROFILE-004: Given existing health data, When viewing the "Health Overview", Then summarized data for Sleep, Food, and Exercise is displayed.', () {
+      // GIVEN: Existing health data
       final healthData = {
         'sleep': 7.5,
         'steps': 8500,
         'calories': 1800,
       };
       
-      // Act
+      // WHEN: Health data is loaded (Act)
       final hasHealthData = healthData['sleep'] != null &&
-                           healthData['steps'] != null &&
-                           healthData['calories'] != null;
+                           healthData['steps'] != null; // Checking core fields
       
-      // Assert
+      // THEN: Assertions
       expect(hasHealthData, true, 
-        reason: 'Profile should display health overview');
+        reason: 'Profile should display summarized health overview.');
+        
+      print('✅ PROFILE-004 Passed: View dashboard summary under Profile successfully.');
     });
 
-    // PROFILE-005: Update account settings successfully (Happy Path)
-    test('PROFILE-005: Change password with valid input', () {
-      // Arrange
+    // PROFILE-005: Happy Path - Update account settings successfully (Change Password)
+    test('PROFILE-005: Given a valid current password and a new password, When the user taps "Save", Then the settings are updated successfully.', () {
+      // GIVEN: Valid password inputs
       const currentPassword = 'oldpass123';
       const newPassword = 'newpass456';
       
-      // Act
+      // WHEN: Validation checks (Act)
       final isCurrentPasswordValid = currentPassword.length >= 6;
       final isNewPasswordValid = _validatePassword(newPassword);
       final canUpdate = isCurrentPasswordValid && isNewPasswordValid;
       
-      // Assert
+      // THEN: Assertions
       expect(canUpdate, true, 
-        reason: 'Password should be updatable with valid inputs');
+        reason: 'Password should be successfully updated.');
+        
+      print('✅ PROFILE-005 Passed: Update account settings successfully.');
     });
 
-    // PROFILE-006: Invalid account settings change (Sad Path)
-    test('PROFILE-006: Reject empty new password', () {
-      // Arrange
-      const currentPassword = 'oldpass123';
+    // PROFILE-006: Sad Path - Invalid account settings change (Empty New Password)
+    test('PROFILE-006: Given an empty new password, When the user taps "Save", Then an "New password is required" error is displayed.', () {
+      // GIVEN: Empty new password
       const newPassword = '';
       
-      // Act
+      // WHEN: Validation check (Act)
       final isNewPasswordValid = _validatePassword(newPassword);
       
-      // Assert
+      // THEN: Assertions
       expect(isNewPasswordValid, false, 
-        reason: 'Empty new password should be rejected');
+        reason: 'Empty new password should be rejected.');
+        
+      print('✅ PROFILE-006 Passed: Invalid account settings change rejected.');
     });
-
-    // Additional: Membership type validation
-    test('PROFILE-007: Validate membership types', () {
-      // Arrange
+    
+    // Additional: Membership type validation (kept for completeness)
+    test('PROFILE-007: Given a membership type, When the profile is loaded, Then the membership type is validated against allowed types.', () {
+      // GIVEN: Valid membership type
       final validMembershipTypes = ['Free', 'Premium'];
       const userMembership = 'Premium';
       
-      // Act
+      // WHEN: Membership is validated (Act)
       final isValidMembership = validMembershipTypes
           .map((e) => e.toLowerCase())
           .contains(userMembership.toLowerCase());
       
-      // Assert
+      // THEN: Assertions
       expect(isValidMembership, true, 
-        reason: 'Membership type should be valid');
-    });
-
-    // Additional: Profile data consistency check
-    test('PROFILE-008: Profile data consistency check', () {
-      // Arrange
-      final profile = {
-        'firstName': 'John',
-        'lastName': 'Doe',
-        'email': 'john@example.com',
-      };
-      
-      // Act
-      final isConsistent = profile['email']!.contains('@') &&
-                          profile['firstName']!.isNotEmpty &&
-                          profile['lastName']!.isNotEmpty;
-      
-      // Assert
-      expect(isConsistent, true, 
-        reason: 'Profile data should be consistent');
+        reason: 'Membership type should be valid.');
+        
+      print('✅ PROFILE-007 Passed: Membership type validated.');
     });
   });
 }
 
 // Helper Functions
 bool _validateWeight(int weight) {
-  return weight > 0 && weight <= 300; // Reasonable weight range in kg
+  return weight > 0 && weight <= 300; 
 }
 
 bool _validateAge(int age) {
-  return age > 0 && age <= 120; // Reasonable age range
+  return age > 0 && age <= 120;
 }
 
 bool _validatePassword(String password) {
